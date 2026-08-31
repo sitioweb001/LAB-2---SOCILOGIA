@@ -648,13 +648,11 @@ button{font-family:inherit;cursor:pointer;}
       <div class="login-card">
         <div class="seal">S</div>
         <h2>¿Cómo te llamás?</h2>
-        <p>Escribí tu nombre para entrar. Es tu cuenta de estudiante — ahí queda guardado, en la nube, el material que ya viste y los exámenes que hagas, desde cualquier dispositivo.</p>
+        <p>Escribí tu nombre y una contraseña para entrar. La primera vez, esa contraseña queda guardada como tuya; las próximas veces la vas a necesitar para volver a entrar con el mismo nombre. Así queda guardado, en la nube, el material que ya viste y los exámenes que hagas, desde cualquier dispositivo.</p>
         <input type="text" id="loginNameInput" placeholder="Nombre completo" autocomplete="name" maxlength="60">
-        <button class="btn primary" id="loginStartBtn">Comenzar a estudiar →</button>
-        <div class="login-known" id="loginKnownWrap" style="display:none;">
-          <div class="login-known-title">Cuentas ya registradas</div>
-          <div id="loginKnownList"></div>
-        </div>
+        <input type="password" id="loginPasswordInput" placeholder="Contraseña" autocomplete="current-password" maxlength="40" style="margin-top:10px;">
+        <div class="modal-err" id="loginErr" style="margin-top:8px;"></div>
+        <button class="btn primary" id="loginStartBtn" style="margin-top:14px;">Comenzar a estudiar →</button>
       </div>
     </div>
   </section>
@@ -810,7 +808,7 @@ button{font-family:inherit;cursor:pointer;}
       <div class="student-table-wrap">
         <table class="student-table">
           <thead>
-            <tr><th>Estudiante</th><th>Material visto</th><th>Exámenes</th><th>Promedio</th><th>Último acceso</th><th>Estado</th></tr>
+            <tr><th>Estudiante</th><th>Contraseña</th><th>Material visto</th><th>Exámenes</th><th>Promedio</th><th>Último acceso</th><th>Estado</th></tr>
           </thead>
           <tbody id="teacherStudentsBody"></tbody>
         </table>
@@ -1084,32 +1082,45 @@ async function ensureWeeksLoaded(){
 }
 
 /* ============================================================
-   LOGIN — cuenta de estudiante (solo nombre, guardado en Sheets)
+   LOGIN — cuenta de estudiante (nombre + contraseña, en Sheets)
 ============================================================ */
-async function renderLoginKnownList(){
+async function doLogin(nombre, clave){
+  const loginErr = document.getElementById('loginErr');
+  loginErr.textContent = '';
+  if(!nombre || !nombre.trim()){ loginErr.textContent = 'Escribí tu nombre.'; return; }
+  if(!clave || !clave.trim()){ loginErr.textContent = 'Escribí tu contraseña.'; return; }
   try{
-    const known = await gs('listKnownStudents');
-    const wrap = document.getElementById('loginKnownWrap');
-    const list = document.getElementById('loginKnownList');
-    if(!known.length){ wrap.style.display = 'none'; return; }
-    wrap.style.display = 'block';
-    list.innerHTML = known.map(k=>`<div class="login-known-item" data-name="${k.nombre.replace(/"/g,'&quot;')}"><span>${k.nombre}</span><small>${fmtDate(k.ultimoAcceso)}</small></div>`).join('');
-    list.querySelectorAll('.login-known-item').forEach(el=>{
-      el.addEventListener('click', ()=> doLogin(el.getAttribute('data-name')));
-    });
-  }catch(err){ /* silencioso: la lista es solo una comodidad */ }
+    CURRENT_USER = await gs('quickStudentLogin', nombre, clave);
+    document.getElementById('loginNameInput').value = '';
+    document.getElementById('loginPasswordInput').value = '';
+    await afterLogin();
+  }catch(err){
+    loginErr.textContent = (err && err.message) || 'No se pudo iniciar sesión.';
+  }
 }
 
-async function doLogin(nombre){
-  if(!nombre || !nombre.trim()) return;
-  try{
-    CURRENT_USER = await gs('quickStudentLogin', nombre);
-    document.getElementById('loginNameInput').value = '';
-    await afterLogin();
-  }catch(err){ showError(err, 'No se pudo iniciar sesión.'); }
-}
-document.getElementById('loginStartBtn').addEventListener('click', ()=> doLogin(document.getElementById('loginNameInput').value));
-document.getElementById('loginNameInput').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(e.target.value); });
+/* Doble clic sobre "Comenzar a estudiar" = acceso oculto al panel docente.
+   Un solo clic hace login normal de estudiante (con una pequeña espera
+   para poder distinguirlo de un doble clic). */
+let loginClickCount = 0;
+let loginClickTimer = null;
+document.getElementById('loginStartBtn').addEventListener('click', ()=>{
+  loginClickCount++;
+  if(loginClickCount === 1){
+    loginClickTimer = setTimeout(()=>{
+      if(loginClickCount === 1){
+        doLogin(document.getElementById('loginNameInput').value, document.getElementById('loginPasswordInput').value);
+      }
+      loginClickCount = 0;
+    }, 320);
+  } else {
+    clearTimeout(loginClickTimer);
+    loginClickCount = 0;
+    openPwModal();
+  }
+});
+document.getElementById('loginNameInput').addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('loginPasswordInput').focus(); });
+document.getElementById('loginPasswordInput').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(document.getElementById('loginNameInput').value, e.target.value); });
 
 async function afterLogin(){
   refreshUserChip();
@@ -1135,7 +1146,6 @@ document.getElementById('userChipSwitchBtn').addEventListener('click', ()=>{
   userChipMenu.classList.remove('open');
   CURRENT_USER = null;
   refreshUserChip();
-  renderLoginKnownList();
   go('login');
 });
 
@@ -1546,17 +1556,18 @@ document.querySelectorAll('.teacher-tab').forEach(b=>{
 /* ---- Estudiantes ---- */
 async function loadTeacherStudents(){
   const body = document.getElementById('teacherStudentsBody');
-  body.innerHTML = `<tr><td colspan="6" class="empty-hint">Cargando...</td></tr>`;
+  body.innerHTML = `<tr><td colspan="7" class="empty-hint">Cargando...</td></tr>`;
   try{
     const rows = await gs('getStudentsOverview', TEACHER_TOKEN);
     document.getElementById('teacherStats').innerHTML = `
       <div class="progress-card"><div class="pv">${rows.length}</div><div class="pl">Estudiantes registrados</div></div>
       <div class="progress-card"><div class="pv">${rows.reduce((a,r)=>a+r.examenesRealizados,0)}</div><div class="pl">Exámenes realizados</div></div>`;
-    if(!rows.length){ body.innerHTML = `<tr><td colspan="6" class="empty-hint">Todavía no hay estudiantes registrados.</td></tr>`; return; }
+    if(!rows.length){ body.innerHTML = `<tr><td colspan="7" class="empty-hint">Todavía no hay estudiantes registrados.</td></tr>`; return; }
     body.innerHTML = rows.map(r=>{
       const pctWeeks = Math.round((r.semanasVistas / (WEEKS.length||1)) * 100);
       return `<tr>
         <td>${r.nombre}</td>
+        <td><code>${r.contrasena}</code></td>
         <td><span class="mini-bar"><span class="mini-bar-fill" style="width:${pctWeeks}%"></span></span>${r.semanasVistas}/${WEEKS.length}</td>
         <td>${r.examenesRealizados}</td>
         <td>${r.examenesRealizados ? r.promedio+'%' : '—'}</td>
@@ -1743,7 +1754,6 @@ async function loadTeacherStats(){
 /* ============================================================
    INIT
 ============================================================ */
-renderLoginKnownList();
 go('login');
 </script>
 
