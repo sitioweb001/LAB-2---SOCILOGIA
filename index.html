@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Sociología UGB — Ingeniería en Sistemas y Redes Informáticas</title>
+<link rel="icon" type="image/png" href="assets/favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -12,23 +13,23 @@
    VARIABLES Y RESET
 ============================================================ */
 :root {
-    --bg-primary: #f1f5f9;
+    --bg-primary: #f4f6fb;
     --bg-secondary: #ffffff;
     --bg-surface: #ffffff;
-    --bg-sidebar: #0b1120;
+    --bg-sidebar: #12154a;
     --bg-card: #ffffff;
-    --bg-input: #f8fafc;
-    --text-primary: #0f172a;
-    --text-secondary: #475569;
-    --text-muted: #94a3b8;
-    --text-sidebar: #e2e8f0;
-    --border-color: #e2e8f0;
-    --border-light: #e9eef3;
-    --shadow: 0 4px 16px rgba(0,0,0,0.06);
-    --shadow-hover: 0 8px 30px rgba(0,0,0,0.10);
-    --primary: #0b1120;
-    --primary-hover: #1e293b;
-    --accent: #facc15;
+    --bg-input: #f1f3fc;
+    --text-primary: #10132b;
+    --text-secondary: #4b5170;
+    --text-muted: #949ab8;
+    --text-sidebar: #e4e6fb;
+    --border-color: #e3e6f6;
+    --border-light: #edeffa;
+    --shadow: 0 4px 16px rgba(28,33,209,0.08);
+    --shadow-hover: 0 8px 30px rgba(28,33,209,0.14);
+    --primary: #1c21d1;
+    --primary-hover: #14179e;
+    --accent: #0891b2;
     --success: #16a34a;
     --danger: #dc2626;
     --warning: #f59e0b;
@@ -38,22 +39,23 @@
     --transition: 0.25s ease;
 }
 [data-theme="dark"] {
-    --bg-primary: #0f172a;
-    --bg-secondary: #1e293b;
-    --bg-surface: #1e293b;
-    --bg-sidebar: #020617;
-    --bg-card: #1e293b;
-    --bg-input: #2d3a4f;
-    --text-primary: #f1f5f9;
-    --text-secondary: #cbd5e1;
-    --text-muted: #94a3b8;
-    --text-sidebar: #e2e8f0;
-    --border-color: #334155;
-    --border-light: #2d3a4f;
+    --bg-primary: #0b0e2b;
+    --bg-secondary: #161a45;
+    --bg-surface: #161a45;
+    --bg-sidebar: #060818;
+    --bg-card: #161a45;
+    --bg-input: #21255c;
+    --text-primary: #f1f2fc;
+    --text-secondary: #c3c6ec;
+    --text-muted: #9296c4;
+    --text-sidebar: #e4e6fb;
+    --border-color: #2c3070;
+    --border-light: #21255c;
     --shadow: 0 4px 16px rgba(0,0,0,0.4);
     --shadow-hover: 0 8px 30px rgba(0,0,0,0.6);
-    --primary: #facc15;
-    --primary-hover: #fbbf24;
+    --primary: #5a5fed;
+    --primary-hover: #7377f2;
+    --accent: #22d3ee;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
@@ -111,16 +113,18 @@ img { max-width: 100%; display: block; }
 .field-error { color: var(--danger); font-size: 0.78rem; margin-top: 4px; display: block; }
 
 .btn { padding: 10px 22px; border-radius: var(--radius-sm); border: none; font-weight: 600; font-size: 0.9rem; transition: var(--transition); display: inline-flex; align-items: center; gap: 8px; cursor: pointer; white-space: nowrap; min-height: 42px; font-family: inherit; }
-.btn-primary { background: var(--primary); color: var(--bg-secondary); }
-[data-theme="dark"] .btn-primary { color: #0f172a; }
+.btn-primary { background: var(--primary); color: #fff; }
+[data-theme="dark"] .btn-primary { color: #0b0e2b; }
 .btn-primary:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: var(--shadow); }
 .btn-secondary { background: var(--bg-input); color: var(--text-primary); border: 1px solid var(--border-color); }
 .btn-secondary:hover { background: var(--border-color); }
 .btn-success { background: var(--success); color: white; }
 .btn-danger { background: var(--danger); color: white; }
 .btn-warning { background: var(--warning); color: white; }
-.btn-accent { background: var(--accent); color: #0f172a; }
-.btn-accent:hover { background: #fbbf24; }
+.btn-accent { background: var(--accent); color: #fff; }
+.btn-accent:hover { background: #0e7490; }
+[data-theme="dark"] .btn-accent { color: #06222b; }
+[data-theme="dark"] .btn-accent:hover { background: #67e8f9; }
 .btn-sm { padding: 6px 12px; font-size: 0.8rem; min-height: 32px; }
 .btn-icon { padding: 8px 10px; min-height: 36px; }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -183,7 +187,9 @@ table.data-table tr:hover td { background: var(--bg-input); }
 .public-topbar-inner { max-width: 1200px; margin: 0 auto; padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 1.1rem; }
 .brand .brand-badge { width: 38px; height: 38px; border-radius: 10px; background: var(--primary); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 1rem; }
-[data-theme="dark"] .brand .brand-badge { color: #0f172a; }
+.brand-logo-img { height: 38px; width: auto; }
+[data-theme="dark"] .brand-logo-img { background: #fff; border-radius: 6px; padding: 3px 6px; }
+[data-theme="dark"] .brand .brand-badge { color: #0b0e2b; }
 .public-nav { display: flex; gap: 6px; flex-wrap: wrap; }
 .public-nav a { padding: 9px 16px; border-radius: var(--radius-sm); font-weight: 600; font-size: 0.88rem; color: var(--text-secondary); cursor: pointer; transition: var(--transition); }
 .public-nav a:hover, .public-nav a.active { background: var(--bg-input); color: var(--text-primary); }
@@ -206,7 +212,7 @@ table.data-table tr:hover td { background: var(--bg-input); }
 
 .hero-section { max-width: 1200px; margin: 32px auto; padding: 0 24px; }
 .hero-card { background: linear-gradient(135deg, var(--primary), var(--primary-hover)); border-radius: var(--radius); padding: 48px 40px; color: #fff; box-shadow: var(--shadow-hover); }
-[data-theme="dark"] .hero-card { color: #0f172a; }
+[data-theme="dark"] .hero-card { color: #0b0e2b; }
 .hero-card h1 { margin-bottom: 10px; }
 .hero-card p { opacity: 0.85; max-width: 600px; }
 
@@ -239,12 +245,27 @@ table.data-table tr:hover td { background: var(--bg-input); }
 /* ============================================================
    FOOTER
 ============================================================ */
-.public-footer { margin-top: 40px; padding: 28px 24px; text-align: center; border-top: 1px solid var(--border-color); color: var(--text-secondary); font-size: 0.85rem; }
+.public-footer { margin-top: 40px; padding: 32px 24px; text-align: center; border-top: 1px solid var(--border-color); color: var(--text-secondary); font-size: 0.85rem; }
 .public-footer p { margin: 2px 0; }
+.footer-logos { display: flex; align-items: center; justify-content: center; gap: 32px; flex-wrap: wrap; margin-bottom: 18px; }
+.footer-logo-ugb { height: 40px; width: auto; }
+.footer-logo-cda { height: 72px; width: auto; }
+[data-theme="dark"] .footer-logo-ugb, [data-theme="dark"] .footer-logo-cda { background: #fff; border-radius: 8px; padding: 6px 10px; }
+
+/* ============================================================
+   MENÚ HAMBURGUESA (Exámenes / Mis resultados)
+============================================================ */
+.hamburger-wrap { position: relative; }
+.hamburger-dropdown { display: none; position: absolute; top: calc(100% + 8px); right: 0; min-width: 190px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-sm); box-shadow: var(--shadow-hover); overflow: hidden; z-index: 500; }
+.hamburger-dropdown.open { display: block; }
+.hamburger-dropdown a { display: flex; align-items: center; gap: 10px; padding: 12px 16px; font-weight: 600; font-size: 0.88rem; color: var(--text-primary); cursor: pointer; transition: var(--transition); }
+.hamburger-dropdown a:hover { background: var(--bg-input); }
+.hamburger-dropdown a i { color: var(--accent); width: 16px; }
 .container-1200 { max-width: 1200px; margin: 0 auto; padding: 0 24px 48px; }
 
 .week-card, .author-card, .exam-card { display: flex; flex-direction: column; gap: 10px; }
-.week-card .week-num { width: 34px; height: 34px; border-radius: 10px; background: var(--accent); color: #0f172a; display: flex; align-items: center; justify-content: center; font-weight: 800; }
+.week-card .week-num { width: 34px; height: 34px; border-radius: 10px; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; }
+[data-theme="dark"] .week-card .week-num { color: #06222b; }
 .author-card { text-align: center; align-items: center; }
 .author-card img, .author-card .avatar-fallback { width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 3px solid var(--accent); margin-bottom: 6px; background: var(--bg-input); display:flex; align-items:center; justify-content:center; font-size:1.8rem; color: var(--text-muted); }
 
@@ -261,7 +282,8 @@ table.data-table tr:hover td { background: var(--bg-input); }
 .sidebar-nav a { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 10px; font-size: 0.88rem; font-weight: 500; opacity: 0.75; cursor: pointer; transition: var(--transition); }
 .sidebar-nav a i { width: 18px; text-align: center; }
 .sidebar-nav a:hover { opacity: 1; background: rgba(255,255,255,0.06); }
-.sidebar-nav a.active { opacity: 1; background: var(--accent); color: #0f172a; font-weight: 700; }
+.sidebar-nav a.active { opacity: 1; background: var(--accent); color: #fff; font-weight: 700; }
+[data-theme="dark"] .sidebar-nav a.active { color: #06222b; }
 .sidebar-divider { height: 1px; background: rgba(255,255,255,0.1); margin: 14px 22px; }
 .sidebar-footer { padding: 0 12px; display: flex; flex-direction: column; gap: 2px; }
 .sidebar-footer a { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 10px; font-size: 0.88rem; opacity: 0.75; cursor: pointer; }
@@ -321,7 +343,7 @@ table.data-table tr:hover td { background: var(--bg-input); }
 <div id="vista-estudiante">
   <header class="public-topbar">
     <div class="public-topbar-inner">
-      <div class="brand"><div class="brand-badge"><i class="fa-solid fa-people-group"></i></div> SOCIOLOGÍA UGB</div>
+      <div class="brand"><img src="assets/logo-crest.png" alt="Escudo Universidad Gerardo Barrios" class="brand-logo-img"> <span>SOCIOLOGÍA UGB</span></div>
       <nav class="public-nav" id="public-nav">
         <a data-view="inicio" class="active">Inicio</a>
         <a data-view="modulo1">Módulo 1</a>
@@ -330,13 +352,18 @@ table.data-table tr:hover td { background: var(--bg-input); }
         <a data-view="modulo4">Módulo 4</a>
         <a data-view="modulo5">Módulo 5</a>
         <a data-view="semanas">Material</a>
-        <a data-view="examenes">Exámenes</a>
-        <a data-view="resultados">Mis resultados</a>
       </nav>
       <div class="topbar-actions">
         <button class="theme-toggle" id="theme-toggle-public" title="Cambiar tema"><i class="fa-solid fa-moon"></i></button>
         <span id="estudiante-chip" style="display:none;align-items:center;gap:8px;font-weight:600;font-size:0.85rem;padding:6px 12px;border-radius:999px;background:var(--bg-input);"><i class="fa-solid fa-user-graduate"></i> <span id="estudiante-chip-nombre"></span></span>
         <button class="btn btn-secondary btn-sm" id="btn-cerrar-sesion-estudiante" style="display:none;" onclick="cerrarSesionEstudiante()"><i class="fa-solid fa-right-from-bracket"></i> Cerrar sesión</button>
+        <div class="hamburger-wrap" id="hamburger-wrap">
+          <button class="theme-toggle" id="btn-hamburguesa" title="Exámenes y resultados" onclick="toggleHamburgerMenu(event)"><i class="fa-solid fa-bars"></i></button>
+          <div class="hamburger-dropdown" id="hamburger-dropdown">
+            <a data-view="examenes"><i class="fa-solid fa-file-pen"></i> Exámenes</a>
+            <a data-view="resultados"><i class="fa-solid fa-chart-simple"></i> Mis resultados</a>
+          </div>
+        </div>
         <button class="btn btn-secondary btn-sm" onclick="pedirClaveAreaDocente()"><i class="fa-solid fa-key"></i> Área docente</button>
       </div>
     </div>
@@ -501,7 +528,11 @@ table.data-table tr:hover td { background: var(--bg-input); }
   </main>
 
   <footer class="public-footer">
-    <div class="container-1200">
+    <div class="container-1200 footer-inner">
+      <div class="footer-logos">
+        <img src="assets/logo-horizontal.png" alt="Universidad Gerardo Barrios" class="footer-logo-ugb">
+        <img src="assets/cda-ugb.png" alt="Acreditación CdA - Comisión de Acreditación de la Calidad de la Educación Superior" class="footer-logo-cda">
+      </div>
       <p>Universidad Gerardo Barrios (UGB) — Ingeniería en Sistemas y Redes Informáticas.</p>
       <p>Proyecto académico · Unidad 1: Ciencia, Ciencias Sociales y Fundamentos de la Sociología · <span id="footer-anio"></span></p>
     </div>
@@ -1204,12 +1235,39 @@ document.getElementById('btn-confirmar-eliminar').addEventListener('click', func
 /* ============================================================
    NAVEGACIÓN PÚBLICA
 ============================================================ */
+const VISTAS_PUBLICAS = ['inicio', 'modulo1', 'modulo2', 'modulo3', 'modulo4', 'modulo5', 'semanas', 'examenes', 'resultados'];
+function mostrarVistaPublica(view) {
+  VISTAS_PUBLICAS.forEach(function (v) {
+    const el = document.getElementById('pub-' + v);
+    if (el) el.style.display = (v === view) ? '' : 'none';
+  });
+  document.querySelectorAll('#public-nav a, #hamburger-dropdown a').forEach(function (x) {
+    x.classList.toggle('active', x.dataset.view === view);
+  });
+  window.scrollTo(0, 0);
+}
 document.getElementById('public-nav').addEventListener('click', function (e) {
   const a = e.target.closest('a[data-view]');
   if (!a) return;
-  document.querySelectorAll('#public-nav a').forEach(function (x) { x.classList.remove('active'); });
-  a.classList.add('active');
-  document.getElementById('pub-' + a.dataset.view).scrollIntoView({ behavior: 'smooth' });
+  mostrarVistaPublica(a.dataset.view);
+});
+
+/* ============================================================
+   MENÚ HAMBURGUESA (Exámenes / Mis resultados)
+============================================================ */
+function toggleHamburgerMenu(e) {
+  e.stopPropagation();
+  document.getElementById('hamburger-dropdown').classList.toggle('open');
+}
+document.getElementById('hamburger-dropdown').addEventListener('click', function (e) {
+  const a = e.target.closest('a[data-view]');
+  if (!a) return;
+  document.getElementById('hamburger-dropdown').classList.remove('open');
+  mostrarVistaPublica(a.dataset.view);
+});
+document.addEventListener('click', function (e) {
+  const wrap = document.getElementById('hamburger-wrap');
+  if (wrap && !wrap.contains(e.target)) document.getElementById('hamburger-dropdown').classList.remove('open');
 });
 
 /* ============================================================
@@ -2158,6 +2216,7 @@ window.addEventListener('DOMContentLoaded', function () {
   initTheme();
   cargarVistaPublica();
   initModulo3Timeline();
+  mostrarVistaPublica('inicio');
   const footerAnio = document.getElementById('footer-anio');
   if (footerAnio) footerAnio.textContent = new Date().getFullYear();
   const savedStudent = localStorage.getItem('ugb_estudiante');
