@@ -187,8 +187,8 @@ table.data-table tr:hover td { background: var(--bg-input); }
 .public-topbar-inner { max-width: 1200px; margin: 0 auto; padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 1.1rem; }
 .brand .brand-badge { width: 38px; height: 38px; border-radius: 10px; background: var(--primary); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 1rem; }
-.brand-logo-img { height: 38px; width: auto; }
-[data-theme="dark"] .brand-logo-img { background: #fff; border-radius: 6px; padding: 3px 6px; }
+.brand-logo-img { height: 56px; width: auto; transition: filter 0.2s ease; }
+[data-theme="dark"] .brand-logo-img { filter: brightness(0) invert(1); }
 [data-theme="dark"] .brand .brand-badge { color: #0b0e2b; }
 .public-nav { display: flex; gap: 6px; flex-wrap: wrap; }
 .public-nav a { padding: 9px 16px; border-radius: var(--radius-sm); font-weight: 600; font-size: 0.88rem; color: var(--text-secondary); cursor: pointer; transition: var(--transition); }
@@ -248,9 +248,15 @@ table.data-table tr:hover td { background: var(--bg-input); }
 .public-footer { margin-top: 40px; padding: 32px 24px; text-align: center; border-top: 1px solid var(--border-color); color: var(--text-secondary); font-size: 0.85rem; }
 .public-footer p { margin: 2px 0; }
 .footer-logos { display: flex; align-items: center; justify-content: center; gap: 32px; flex-wrap: wrap; margin-bottom: 18px; }
-.footer-logo-ugb { height: 40px; width: auto; }
-.footer-logo-cda { height: 72px; width: auto; }
-[data-theme="dark"] .footer-logo-ugb, [data-theme="dark"] .footer-logo-cda { background: #fff; border-radius: 8px; padding: 6px 10px; }
+.footer-logo-ugb { height: 62px; width: auto; transition: filter 0.2s ease; }
+.footer-logo-cda { height: 108px; width: auto; transition: filter 0.2s ease; }
+[data-theme="dark"] .footer-logo-ugb, [data-theme="dark"] .footer-logo-cda { filter: brightness(0) invert(1); }
+.footer-academic-info { margin: 4px 0 18px; padding: 16px 20px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: var(--bg-input); max-width: 480px; margin-left: auto; margin-right: auto; text-align: left; }
+.footer-academic-info p { margin: 3px 0; color: var(--text-secondary); }
+.footer-academic-info .fai-title { font-weight: 800; color: var(--text-primary); text-align: center; letter-spacing: 0.03em; margin-bottom: 8px !important; }
+.footer-academic-info .fai-label { font-weight: 700; color: var(--text-primary); }
+.footer-academic-info ul { margin: 4px 0 0; padding-left: 20px; color: var(--text-secondary); }
+.footer-academic-info ul li { margin: 2px 0; }
 
 /* ============================================================
    MENÚ HAMBURGUESA (Exámenes / Mis resultados)
@@ -535,6 +541,17 @@ table.data-table tr:hover td { background: var(--bg-input); }
       </div>
       <p>Universidad Gerardo Barrios (UGB) — Ingeniería en Sistemas y Redes Informáticas.</p>
       <p>Proyecto académico · Unidad 1: Ciencia, Ciencias Sociales y Fundamentos de la Sociología · <span id="footer-anio"></span></p>
+      <div class="footer-academic-info">
+        <p class="fai-title">PARCIAL — BLOQUE N.º1 · CICLO II | SOCIOLOGÍA GENERAL</p>
+        <p><span class="fai-label">Docente:</span> Lic. Kevin Francisco Muñoz Paniagua</p>
+        <p><span class="fai-label">Integrantes:</span></p>
+        <ul>
+          <li>Ricardo Alexander Chávez Martínez</li>
+          <li>Emily María Quito Fuentes</li>
+          <li>Emerson Giancarlo Castro Pleitez</li>
+        </ul>
+        <p style="text-align:center;margin-top:8px;">2026</p>
+      </div>
     </div>
   </footer>
 </div>
