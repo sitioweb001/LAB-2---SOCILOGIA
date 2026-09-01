@@ -191,6 +191,19 @@ table.data-table tr:hover td { background: var(--bg-input); }
 .theme-toggle { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border-color); background: var(--bg-input); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; transition: var(--transition); }
 .theme-toggle:hover { transform: rotate(20deg); }
 
+/* ============================================================
+   OVERLAY DE CARGA GLOBAL
+============================================================ */
+#loading-overlay { position: fixed; inset: 0; z-index: 999999; display: none; align-items: center; justify-content: center; flex-direction: column; gap: 14px; background: rgba(15,23,42,0.55); backdrop-filter: blur(3px); }
+#loading-overlay.active { display: flex; }
+.loader-spinner { width: 52px; height: 52px; border-radius: 50%; border: 4px solid rgba(255,255,255,0.25); border-top-color: var(--accent); animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+#loading-overlay .loader-text { color: #f8fafc; font-weight: 600; font-size: 0.95rem; letter-spacing: 0.2px; text-align: center; padding: 0 20px; }
+#loading-overlay .loader-sub { color: #cbd5e1; font-size: 0.8rem; text-align: center; padding: 0 20px; }
+.inline-spinner { display: inline-block; width: 14px; height: 14px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.4); border-top-color: currentColor; animation: spin 0.7s linear infinite; margin-right: 6px; vertical-align: -2px; }
+.progress-import-track { width: 100%; height: 8px; border-radius: 6px; background: var(--bg-input); overflow: hidden; margin-top: 10px; }
+.progress-import-fill { height: 100%; background: var(--accent); transition: width 0.2s ease; border-radius: 6px; }
+
 .hero-section { max-width: 1200px; margin: 32px auto; padding: 0 24px; }
 .hero-card { background: linear-gradient(135deg, var(--primary), var(--primary-hover)); border-radius: var(--radius); padding: 48px 40px; color: #fff; box-shadow: var(--shadow-hover); }
 [data-theme="dark"] .hero-card { color: #0f172a; }
@@ -264,6 +277,11 @@ table.data-table tr:hover td { background: var(--bg-input); }
 </style>
 </head>
 <body>
+<div id="loading-overlay">
+  <div class="loader-spinner"></div>
+  <div class="loader-text" id="loading-overlay-text">Procesando...</div>
+  <div class="loader-sub" id="loading-overlay-sub"></div>
+</div>
 
 <!-- ============================================================
      VISTA ESTUDIANTE (PÚBLICA)
@@ -281,7 +299,9 @@ table.data-table tr:hover td { background: var(--bg-input); }
       </nav>
       <div class="topbar-actions">
         <button class="theme-toggle" id="theme-toggle-public" title="Cambiar tema"><i class="fa-solid fa-moon"></i></button>
-        <button class="btn btn-secondary btn-sm" onclick="openModal('modal-area-docente')"><i class="fa-solid fa-key"></i> Área docente</button>
+        <span id="estudiante-chip" style="display:none;align-items:center;gap:8px;font-weight:600;font-size:0.85rem;padding:6px 12px;border-radius:999px;background:var(--bg-input);"><i class="fa-solid fa-user-graduate"></i> <span id="estudiante-chip-nombre"></span></span>
+        <button class="btn btn-secondary btn-sm" id="btn-cerrar-sesion-estudiante" style="display:none;" onclick="cerrarSesionEstudiante()"><i class="fa-solid fa-right-from-bracket"></i> Cerrar sesión</button>
+        <button class="btn btn-secondary btn-sm" onclick="pedirClaveAreaDocente()"><i class="fa-solid fa-key"></i> Área docente</button>
       </div>
     </div>
   </header>
@@ -313,7 +333,7 @@ table.data-table tr:hover td { background: var(--bg-input); }
       <div class="section-header"><div><h2>Mis resultados</h2><p id="resultados-sub">Identifícate para ver tu historial de exámenes.</p></div>
         <button class="btn btn-secondary btn-sm" id="btn-identificarse" onclick="openModal('modal-estudiante-id')"><i class="fa-solid fa-user"></i> Identificarme</button>
       </div>
-      <div class="table-wrap"><table class="data-table"><thead><tr><th>Examen</th><th>Puntuación</th><th>Correctas</th><th>Fecha</th></tr></thead><tbody id="tbody-mis-resultados"><tr><td colspan="4" class="empty-state">Identifícate para ver tus resultados.</td></tr></tbody></table></div>
+      <div class="table-wrap"><table class="data-table"><thead><tr><th>Examen</th><th>Puntuación</th><th>Correctas</th><th>Fecha</th><th>Detalle</th></tr></thead><tbody id="tbody-mis-resultados"><tr><td colspan="5" class="empty-state">Identifícate para ver tus resultados.</td></tr></tbody></table></div>
     </div>
   </div>
 </div>
@@ -378,9 +398,10 @@ table.data-table tr:hover td { background: var(--bg-input); }
               <div><h2>Estudiantes</h2><p>Administra los estudiantes registrados.</p></div>
               <button class="btn btn-primary" onclick="openStudentModal()"><i class="fa-solid fa-plus"></i> Agregar estudiante</button>
             </div>
+            <div id="aviso-estudiantes-pendientes" class="alert alert-warning" style="display:none;margin-bottom:14px;"></div>
             <div class="toolbar">
               <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input id="buscar-estudiante" placeholder="Buscar estudiante..." oninput="renderStudentsTable()"></div>
-              <select id="filtro-estudiante-estado" onchange="renderStudentsTable()"><option value="">Todos</option><option value="Activo">Activos</option><option value="Inactivo">Inactivos</option></select>
+              <select id="filtro-estudiante-estado" onchange="renderStudentsTable()"><option value="">Todos</option><option value="Activo">Activos</option><option value="Pendiente">Pendientes</option><option value="Inactivo">Inactivos</option></select>
             </div>
             <div class="table-wrap"><table class="data-table"><thead><tr><th>Estudiante</th><th>Correo</th><th>Semana</th><th>Progreso</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="tbody-estudiantes"></tbody></table></div>
           </div>
@@ -448,8 +469,14 @@ table.data-table tr:hover td { background: var(--bg-input); }
           <div class="section-card">
             <div class="section-header">
               <div><h2>Exámenes</h2><p>Administra los exámenes del curso.</p></div>
-              <button class="btn btn-primary" onclick="openExamModal()"><i class="fa-solid fa-plus"></i> Crear examen</button>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <input type="file" id="input-importar-json" accept="application/json" style="display:none;" onchange="importarBancoJSON(event)">
+                <button class="btn btn-secondary" onclick="document.getElementById('input-importar-json').click()"><i class="fa-solid fa-file-import"></i> Importar JSON</button>
+                <button class="btn btn-secondary" onclick="exportarBancoJSON()"><i class="fa-solid fa-file-export"></i> Exportar JSON</button>
+                <button class="btn btn-primary" onclick="openExamModal()"><i class="fa-solid fa-plus"></i> Crear examen</button>
+              </div>
             </div>
+            <p id="import-json-status" style="font-size:0.85rem;color:var(--text-secondary);margin:-8px 0 14px;"></p>
             <div class="table-wrap"><table class="data-table"><thead><tr><th>Nombre</th><th>Tipo</th><th>Preguntas</th><th>Tiempo</th><th>Intentos</th><th>Promedio</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="tbody-examenes"></tbody></table></div>
           </div>
         </section>
@@ -503,6 +530,19 @@ table.data-table tr:hover td { background: var(--bg-input); }
             <h3 style="margin-bottom:16px;">🔑 Configuración de usuarios</h3>
             <div class="form-group"><label>Código de registro docente</label><input id="cfg-codigo-docente" readonly></div>
             <button class="btn btn-secondary" onclick="regenerarCodigo()">Generar nuevo código</button>
+          </div>
+          <div class="section-card">
+            <h3 style="margin-bottom:6px;">✅ Validación de cuentas de estudiante</h3>
+            <p style="color:var(--text-secondary);font-size:0.88rem;margin-bottom:16px;">Cuando un estudiante se identifica por primera vez con su nombre y correo, decide si su cuenta queda activa de inmediato o si debes aprobarla tú antes de que pueda tomar exámenes.</p>
+            <div class="form-group"><label><input type="checkbox" id="cfg-requiere-aprobacion" style="width:auto;margin-right:8px;">Requerir que yo apruebe manualmente cada cuenta nueva de estudiante</label></div>
+            <div class="form-group"><label>Dominio de correo institucional que se aprueba automáticamente (opcional)</label><input id="cfg-dominio-institucional" placeholder="p. ej. @clases.edu.sv"></div>
+            <button class="btn btn-primary" onclick="guardarConfigEstudiantes()">Guardar</button>
+          </div>
+          <div class="section-card">
+            <h3 style="margin-bottom:6px;">🗄️ Base de datos</h3>
+            <p style="color:var(--text-secondary);font-size:0.88rem;margin-bottom:16px;">Crea automáticamente en Google Sheets las hojas y columnas que falten según la versión actual de la plataforma. No borra ni duplica información existente.</p>
+            <div id="init-db-result"></div>
+            <button class="btn btn-accent" id="btn-init-db" onclick="inicializarBaseDatos()"><i class="fa-solid fa-database"></i> Inicializar base de datos</button>
           </div>
         </section>
 
@@ -613,7 +653,7 @@ table.data-table tr:hover td { background: var(--bg-input); }
         <div class="form-group"><label>Semana actual</label><input type="number" id="est-form-semana" value="1"></div>
         <div class="form-group"><label>Progreso (%)</label><input type="number" id="est-form-progreso" value="0"></div>
       </div>
-      <div class="form-group"><label>Estado</label><select id="est-form-estado"><option>Activo</option><option>Inactivo</option></select></div>
+      <div class="form-group"><label>Estado</label><select id="est-form-estado"><option>Activo</option><option>Pendiente</option><option>Inactivo</option></select></div>
     </div>
     <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('modal-estudiante')">Cancelar</button><button class="btn btn-primary" onclick="guardarEstudiante()">Guardar</button></div>
   </div>
@@ -652,7 +692,13 @@ table.data-table tr:hover td { background: var(--bg-input); }
         <div class="form-group"><label>Autor</label><input id="mat-autor"></div>
         <div class="form-group"><label>Estado</label><select id="mat-estado"><option>Activo</option><option>Inactivo</option></select></div>
       </div>
-      <div class="form-group"><label>URL de imagen</label><input id="mat-imagen"></div>
+      <div class="form-group"><label>URL de imagen</label><input id="mat-imagen">
+        <div style="margin-top:6px;display:flex;align-items:center;gap:10px;">
+          <input type="file" accept="image/*" id="mat-imagen-file" style="display:none;" onchange="subirImagenA('mat-imagen-file','mat-imagen','material')">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('mat-imagen-file').click()"><i class="fa-solid fa-upload"></i> Subir imagen</button>
+          <span id="mat-imagen-preview"></span>
+        </div>
+      </div>
       <div class="form-row">
         <div class="form-group"><label>URL de video</label><input id="mat-video"></div>
         <div class="form-group"><label>URL de recurso</label><input id="mat-recurso"></div>
@@ -675,7 +721,13 @@ table.data-table tr:hover td { background: var(--bg-input); }
         <div class="form-group"><label>Teoría</label><input id="aut-teoria"></div>
         <div class="form-group"><label>Estado</label><select id="aut-estado"><option>Activo</option><option>Inactivo</option></select></div>
       </div>
-      <div class="form-group"><label>URL de imagen</label><input id="aut-imagen"></div>
+      <div class="form-group"><label>URL de imagen</label><input id="aut-imagen">
+        <div style="margin-top:6px;display:flex;align-items:center;gap:10px;">
+          <input type="file" accept="image/*" id="aut-imagen-file" style="display:none;" onchange="subirImagenA('aut-imagen-file','aut-imagen','autores')">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('aut-imagen-file').click()"><i class="fa-solid fa-upload"></i> Subir imagen</button>
+          <span id="aut-imagen-preview"></span>
+        </div>
+      </div>
     </div>
     <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('modal-autor')">Cancelar</button><button class="btn btn-primary" onclick="guardarAutor()">Guardar</button></div>
   </div>
@@ -772,7 +824,9 @@ table.data-table tr:hover td { background: var(--bg-input); }
     <div class="modal-header"><div><h3 id="detalle-titulo">Resultado</h3><p id="detalle-sub"></p></div><button class="modal-close" onclick="closeModal('modal-detalle-resultado')">✕</button></div>
     <div class="modal-body" id="detalle-body"></div>
     <div class="modal-footer">
-      <button class="btn btn-warning" id="btn-mostrar-respuestas" onclick="openModal('modal-clave-respuestas')"><i class="fa-solid fa-lock"></i> Mostrar respuestas</button>
+      <button class="btn btn-warning" id="btn-mostrar-respuestas" style="display:none;" onclick="openModal('modal-clave-respuestas')"><i class="fa-solid fa-lock"></i> Mostrar respuestas</button>
+      <button class="btn btn-accent" id="btn-editar-resultado" style="display:none;" onclick="activarEdicionResultado()"><i class="fa-solid fa-pen"></i> Corregir calificación</button>
+      <button class="btn btn-success" id="btn-guardar-resultado" style="display:none;" onclick="guardarEdicionResultado()"><i class="fa-solid fa-floppy-disk"></i> Guardar cambios</button>
       <button class="btn btn-secondary" onclick="closeModal('modal-detalle-resultado')">Cerrar</button>
     </div>
   </div>
@@ -791,11 +845,43 @@ table.data-table tr:hover td { background: var(--bg-input); }
   </div>
 </div>
 
+<!-- CLAVE DE ACCESO RÁPIDO AL ÁREA DOCENTE -->
+<div class="modal" id="modal-clave-panel-docente">
+  <div class="modal-content">
+    <div class="modal-header"><h3>🔒 Acceso al área docente</h3><button class="modal-close" onclick="closeModal('modal-clave-panel-docente')">✕</button></div>
+    <div class="modal-body">
+      <p style="color:var(--text-secondary);margin-bottom:14px;">Ingresa el código de acceso rápido para continuar al inicio de sesión / registro docente.</p>
+      <div class="form-group"><label>Código de acceso</label><input type="password" id="clave-panel-docente-input" onkeydown="if(event.key==='Enter')verificarClavePanelDocente();"></div>
+      <div id="clave-panel-docente-error"></div>
+      <button class="btn btn-primary btn-block" onclick="verificarClavePanelDocente()">Continuar</button>
+    </div>
+  </div>
+</div>
+
 <script>
 /* ============================================================
    CONFIGURACIÓN GLOBAL
 ============================================================ */
-const API_URL = "URL_DEL_GOOGLE_APPS_SCRIPT"; // <-- reemplazar con la URL de despliegue del Web App de codigo.gs
+const API_URL = "https://script.google.com/macros/s/AKfycbypQfB5Rcj2MHXdt-rfpKHwUjkurqssLRnkz39SsSIn_zBPH2s9JH1YrtwAuQ0Eo0RibA/exec"; // <-- reemplazar con la URL de despliegue del Web App de codigo.gs
+
+/* ============================================================
+   BACKEND: 'gas' (Apps Script, como ahora) o 'firebase' (Firestore)
+   Cambia este valor a 'firebase' únicamente después de:
+   1) Completar FIREBASE_CONFIG más abajo con tus credenciales reales.
+   2) Publicar las reglas de firestore.rules en la consola de Firebase.
+   3) Ejecutar la inicialización oculta (ver comentario "GESTO OCULTO").
+============================================================ */
+const BACKEND_MODE = 'firebase'; // 'gas' | 'firebase'
+
+window.FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBlv7lCkxI5--jiFdCUPyJyZGCUvbCoKVE",
+  authDomain: "socilogia-sistema-de-exa-752b9.firebaseapp.com",
+  projectId: "socilogia-sistema-de-exa-752b9",
+  storageBucket: "socilogia-sistema-de-exa-752b9.firebasestorage.app",
+  messagingSenderId: "905080931214",
+  appId: "1:905080931214:web:34b1a8e6b65ff39aba5adf"
+};
+const FIREBASE_CONFIG = window.FIREBASE_CONFIG; // alias local para el resto de este script
 
 const state = {
   docente: null,
@@ -807,21 +893,54 @@ const state = {
 };
 
 /* ============================================================
-   API HELPER
+   OVERLAY DE CARGA — controlado desde api()
+============================================================ */
+let loadingDepth = 0;
+const LOADING_MESSAGES = {
+  loginTeacher: 'Verificando credenciales...', registerTeacher: 'Creando tu cuenta...', loginStudent: 'Identificando estudiante...',
+  getWeeks: 'Cargando semanas...', getAuthors: 'Cargando autores...', getMaterial: 'Cargando material...',
+  getStudents: 'Cargando estudiantes...', getQuestions: 'Cargando preguntas...', getExams: 'Cargando exámenes...',
+  getResults: 'Cargando resultados...', getStatistics: 'Calculando estadísticas...', getExamForStudent: 'Preparando examen...',
+  submitAttempt: 'Calificando tu examen...', getResultDetail: 'Cargando detalle del resultado...',
+  initDatabase: 'Sincronizando base de datos...', createQuestion: 'Guardando pregunta...', updateQuestion: 'Actualizando pregunta...',
+  createExam: 'Creando examen...', updateExam: 'Actualizando examen...'
+};
+function mostrarCarga(action) {
+  const esLlamadaExterna = loadingDepth === 0; // solo la primera llamada de una cadena fija el texto
+  loadingDepth++;
+  const overlay = document.getElementById('loading-overlay');
+  if (esLlamadaExterna) {
+    document.getElementById('loading-overlay-text').textContent = LOADING_MESSAGES[action] || 'Procesando...';
+    document.getElementById('loading-overlay-sub').textContent = 'Esto puede tardar unos segundos.';
+  }
+  overlay.classList.add('active');
+}
+function ocultarCarga() {
+  loadingDepth = Math.max(0, loadingDepth - 1);
+  if (loadingDepth === 0) document.getElementById('loading-overlay').classList.remove('active');
+}
+
+/* ============================================================
+   API HELPER — enruta a Apps Script o a Firebase según BACKEND_MODE
 ============================================================ */
 async function api(action, payload) {
-  const body = Object.assign({ action: action }, payload || {});
+  mostrarCarga(action);
   try {
-    const res = await fetch(API_URL, {
-      method: 'POST',
-      body: JSON.stringify(body)
-    });
+    if (BACKEND_MODE === 'firebase') {
+      const data = await FirebaseBackend.ejecutar(action, payload || {});
+      if (!data.success) throw new Error(data.error || 'Error desconocido');
+      return data;
+    }
+    const body = Object.assign({ action: action }, payload || {});
+    const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(body) });
     const data = await res.json();
     if (!data.success) throw new Error(data.error || 'Error desconocido');
     return data;
   } catch (err) {
-    console.error('Error de API:', err);
+    console.error('Error de API (' + action + '):', err);
     throw err;
+  } finally {
+    ocultarCarga();
   }
 }
 
@@ -846,6 +965,46 @@ function updateThemeIcon() {
   if (icon) icon.className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
 }
 document.getElementById('theme-toggle-public').addEventListener('click', toggleTheme);
+
+/* ============================================================
+   GESTO OCULTO — Ctrl/Cmd + doble clic sobre el botón de tema
+   Inicializa (o repara) la base de datos en Firebase, creando las
+   colecciones y campos que falten. No hace nada si BACKEND_MODE
+   no está en 'firebase' o si faltan credenciales reales.
+============================================================ */
+document.getElementById('theme-toggle-public').addEventListener('dblclick', function (e) {
+  if (!(e.ctrlKey || e.metaKey)) return; // debe ir acompañado de Ctrl (Cmd en Mac)
+  e.preventDefault();
+  e.stopPropagation();
+  gestoOcultoInicializarBD();
+});
+async function gestoOcultoInicializarBD() {
+  if (BACKEND_MODE !== 'firebase') {
+    alertaFlotante('Activa BACKEND_MODE = "firebase" y completa FIREBASE_CONFIG antes de inicializar.', 'warning');
+    return;
+  }
+  if (FIREBASE_CONFIG.apiKey === 'TU_API_KEY') {
+    alertaFlotante('Falta configurar FIREBASE_CONFIG con tus credenciales reales.', 'danger');
+    return;
+  }
+  if (!confirm('¿Inicializar/reparar la base de datos en Firebase? Esto creará las colecciones y campos que falten, sin borrar datos existentes.')) return;
+  mostrarCarga('initDatabase');
+  document.getElementById('loading-overlay-text').textContent = 'Inicializando Firebase...';
+  document.getElementById('loading-overlay-sub').textContent = 'Creando colecciones y documentos base si no existen.';
+  try {
+    const res = await FirebaseBackend.initDatabase();
+    alertaFlotante(res.mensaje, 'success');
+    if (res.codigoDocente) {
+      alert('Base de datos inicializada.\n\nCódigo de registro docente:\n' + res.codigoDocente + '\n\nGuárdalo: lo necesitas para crear la primera cuenta de docente. También puedes verlo luego en Firestore, en config/general, o regenerarlo desde Configuración una vez tengas una cuenta docente activa.');
+    }
+    await cargarTodo().catch(function () {});
+  } catch (err) {
+    console.error(err);
+    alertaFlotante('No fue posible inicializar Firebase. Revisa la consola.', 'danger');
+  } finally {
+    ocultarCarga();
+  }
+}
 
 /* ============================================================
    MODALES GENÉRICOS
@@ -967,22 +1126,56 @@ async function identificarEstudiante() {
   if (!nombre || !correo) return;
   try {
     const res = await api('loginStudent', { nombre: nombre, correo: correo });
+    if (res.usuario.ESTADO === 'Pendiente') {
+      alertaFlotante('Tu cuenta fue registrada pero está pendiente de aprobación por el docente. Vuelve a intentarlo más tarde.', 'warning');
+      return;
+    }
+    if (res.usuario.ESTADO === 'Inactivo') {
+      alertaFlotante('Tu acceso está desactivado. Contacta a tu docente.', 'danger');
+      return;
+    }
     state.estudiante = res.usuario;
     localStorage.setItem('ugb_estudiante', JSON.stringify(res.usuario));
     closeModal('modal-estudiante-id');
     cargarMisResultados();
   } catch (err) { alertaFlotante('No fue posible identificarte, verifica tu correo.', 'danger'); }
 }
+function cerrarSesionEstudiante() {
+  state.estudiante = null;
+  localStorage.removeItem('ugb_estudiante');
+  document.getElementById('estudiante-chip').style.display = 'none';
+  document.getElementById('btn-cerrar-sesion-estudiante').style.display = 'none';
+  document.getElementById('btn-identificarse').style.display = 'inline-flex';
+  document.getElementById('resultados-sub').textContent = 'Identifícate para ver tu historial de exámenes.';
+  document.getElementById('tbody-mis-resultados').innerHTML = '<tr><td colspan="5" class="empty-state">Identifícate para ver tus resultados.</td></tr>';
+  alertaFlotante('Sesión cerrada.');
+}
 async function cargarMisResultados() {
   if (!state.estudiante) return;
   document.getElementById('resultados-sub').textContent = 'Hola ' + state.estudiante.NOMBRE + ', este es tu historial.';
   document.getElementById('btn-identificarse').style.display = 'none';
+  document.getElementById('estudiante-chip').style.display = 'inline-flex';
+  document.getElementById('estudiante-chip-nombre').textContent = state.estudiante.NOMBRE;
+  document.getElementById('btn-cerrar-sesion-estudiante').style.display = 'inline-flex';
   const res = await api('getMyResults', { estudianteId: state.estudiante.ID });
   const tbody = document.getElementById('tbody-mis-resultados');
-  if (!res.data.length) { tbody.innerHTML = '<tr><td colspan="4" class="empty-state">Aún no tienes exámenes realizados.</td></tr>'; return; }
+  if (!res.data.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Aún no tienes exámenes realizados.</td></tr>'; return; }
   tbody.innerHTML = res.data.map(function (r) {
-    return '<tr><td>' + r.EXAMEN_NOMBRE + '</td><td><span class="badge badge-' + badgeForScore(r.PUNTUACION) + '">' + r.PUNTUACION + '%</span></td><td>' + r.CORRECTAS + '/' + (Number(r.CORRECTAS) + Number(r.INCORRECTAS)) + '</td><td>' + r.FECHA + '</td></tr>';
+    return '<tr><td>' + r.EXAMEN_NOMBRE + '</td><td><span class="badge badge-' + badgeForScore(r.PUNTUACION) + '">' + r.PUNTUACION + '%</span></td><td>' + r.CORRECTAS + '/' + (Number(r.CORRECTAS) + Number(r.INCORRECTAS)) + '</td><td>' + r.FECHA + '</td>' +
+      '<td><button class="btn btn-secondary btn-sm" onclick=\'verResultadoPropio(' + "'" + r.ID + "','" + (r.EXAMEN_NOMBRE || '').replace(/'/g, "\\'") + "'" + ')\'><i class="fa-solid fa-eye"></i> Ver</button></td></tr>';
   }).join('');
+}
+async function verResultadoPropio(id, examenNombre) {
+  state.resultadoActualId = id;
+  const res = await api('getResultDetail', { id: id });
+  document.getElementById('detalle-titulo').textContent = '📊 Tu resultado';
+  document.getElementById('detalle-sub').textContent = examenNombre + ' · ' + res.resultado.PUNTUACION + '% (' + res.resultado.CORRECTAS + '/' + (Number(res.resultado.CORRECTAS) + Number(res.resultado.INCORRECTAS)) + ' correctas)';
+  state.detalleEditable = false;
+  renderDetalleBody(res, false);
+  document.getElementById('btn-mostrar-respuestas').style.display = 'none';
+  document.getElementById('btn-editar-resultado').style.display = 'none';
+  document.getElementById('btn-guardar-resultado').style.display = 'none';
+  openModal('modal-detalle-resultado');
 }
 function badgeForScore(p) { p = Number(p); return p >= 70 ? 'success' : (p >= 50 ? 'warning' : 'danger'); }
 
@@ -1078,6 +1271,7 @@ async function renderDashboard() {
   const cards = [
     ['fa-user-graduate', 'success', s.totalEstudiantes, 'Total estudiantes'],
     ['fa-user-check', 'info', s.estudiantesActivos, 'Estudiantes activos'],
+    ['fa-user-clock', 'warning', s.estudiantesPendientes || 0, 'Pendientes de aprobar'],
     ['fa-circle-question', 'warning', s.totalPreguntas, 'Preguntas'],
     ['fa-file-lines', 'danger', s.totalExamenes, 'Exámenes'],
     ['fa-list-check', 'info', s.examenesRealizados, 'Exámenes realizados'],
@@ -1138,13 +1332,21 @@ function renderStudentsTable() {
   let rows = state.estudiantes.filter(function (e) {
     return (!q || e.NOMBRE.toLowerCase().includes(q) || e.CORREO.toLowerCase().includes(q)) && (!estado || e.ESTADO === estado);
   });
+  const pendientes = state.estudiantes.filter(function (e) { return e.ESTADO === 'Pendiente'; }).length;
+  const avisoPendientes = document.getElementById('aviso-estudiantes-pendientes');
+  if (avisoPendientes) avisoPendientes.style.display = pendientes ? 'block' : 'none';
+  if (avisoPendientes) avisoPendientes.textContent = pendientes ? ('⚠ Tienes ' + pendientes + ' estudiante(s) esperando aprobación.') : '';
   document.getElementById('tbody-estudiantes').innerHTML = rows.map(function (e) {
+    const colorBadge = e.ESTADO === 'Activo' ? 'success' : (e.ESTADO === 'Pendiente' ? 'warning' : 'danger');
     return '<tr><td>' + e.NOMBRE + '</td><td>' + e.CORREO + '</td><td>' + e.SEMANA_ACTUAL + '</td><td><div class="progress-bar-track"><div class="progress-bar-fill" style="width:' + (e.PROGRESO || 0) + '%;"></div></div></td>' +
-      '<td><span class="badge badge-' + (e.ESTADO === 'Activo' ? 'success' : 'danger') + '">' + e.ESTADO + '</span></td>' +
-      '<td class="table-actions"><button class="btn btn-secondary btn-icon" onclick=\'openStudentModal(' + JSON.stringify(e).replace(/'/g, "&#39;") + ')\'><i class="fa-solid fa-pen"></i></button>' +
+      '<td><span class="badge badge-' + colorBadge + '">' + e.ESTADO + '</span></td>' +
+      '<td class="table-actions">' +
+      (e.ESTADO === 'Pendiente' ? '<button class="btn btn-primary btn-icon" title="Aprobar" onclick="aprobarEstudiante(\'' + e.ID + '\')"><i class="fa-solid fa-check"></i></button>' : '') +
+      '<button class="btn btn-secondary btn-icon" onclick=\'openStudentModal(' + JSON.stringify(e).replace(/'/g, "&#39;") + ')\'><i class="fa-solid fa-pen"></i></button>' +
       '<button class="btn btn-danger btn-icon" onclick="confirmarEliminar(function(){ eliminarEstudiante(\'' + e.ID + '\'); })"><i class="fa-solid fa-trash"></i></button></td></tr>';
   }).join('') || '<tr><td colspan="6" class="empty-state">No hay estudiantes registrados.</td></tr>';
 }
+async function aprobarEstudiante(id) { await api('updateStudent', { id: id, data: { ESTADO: 'Activo' } }); await cargarTodo(); renderStudentsTable(); alertaFlotante('Estudiante aprobado.'); }
 async function eliminarEstudiante(id) { await api('deleteStudent', { id: id }); await cargarTodo(); renderStudentsTable(); alertaFlotante('Estudiante eliminado.'); }
 
 /* ============================================================
@@ -1249,6 +1451,34 @@ function renderAuthorsAdmin() {
   }).join('') || '<div class="empty-state">No hay autores registrados.</div>';
 }
 async function eliminarAutor(id) { await api('deleteAuthor', { id: id }); await cargarTodo(); renderAuthorsAdmin(); }
+
+/* ============================================================
+   SUBIR IMAGEN A FIREBASE STORAGE (autores / material)
+============================================================ */
+async function subirImagenA(inputFileId, inputUrlId, carpeta) {
+  const input = document.getElementById(inputFileId);
+  const file = input.files[0];
+  input.value = '';
+  if (!file) return;
+  if (BACKEND_MODE !== 'firebase') {
+    alertaFlotante('La subida de imágenes requiere BACKEND_MODE = "firebase". Por ahora pega una URL de imagen manualmente.', 'warning');
+    return;
+  }
+  if (file.size > 5 * 1024 * 1024) { alertaFlotante('La imagen debe pesar menos de 5 MB.', 'danger'); return; }
+  mostrarCarga(null);
+  document.getElementById('loading-overlay-text').textContent = 'Subiendo imagen...';
+  document.getElementById('loading-overlay-sub').textContent = file.name;
+  try {
+    const url = await FirebaseBackend.subirImagen(file, carpeta);
+    document.getElementById(inputUrlId).value = url;
+    alertaFlotante('Imagen subida correctamente.');
+  } catch (err) {
+    console.error(err);
+    alertaFlotante('No fue posible subir la imagen. Revisa la consola.', 'danger');
+  } finally {
+    ocultarCarga();
+  }
+}
 
 /* ============================================================
    PREGUNTAS — CRUD (10 tipos con formulario dinámico)
@@ -1396,6 +1626,130 @@ function renderExamsTable() {
 }
 async function eliminarExamen(id) { await api('deleteExam', { id: id }); await cargarTodo(); renderExamsTable(); }
 
+/* ============================================================
+   EXPORTAR / IMPORTAR BANCO COMPLETO EN JSON
+   Incluye semanas, autores, material, preguntas (con opciones,
+   relaciones y respuestas correctas) y exámenes con sus preguntas
+   vinculadas. Sirve como respaldo, migración entre backends o
+   como plantilla de prueba con datos ya llenos.
+============================================================ */
+async function exportarBancoJSON() {
+  mostrarCarga(null);
+  document.getElementById('loading-overlay-text').textContent = 'Generando archivo JSON...';
+  document.getElementById('loading-overlay-sub').textContent = 'Recolectando preguntas de cada examen.';
+  try {
+    await cargarTodo();
+    const examenesConPreguntas = [];
+    for (const ex of state.examenes) {
+      const ep = await api('getExamForStudent', { id: ex.ID });
+      examenesConPreguntas.push({
+        NOMBRE: ex.NOMBRE, TIPO: ex.TIPO, SEMANA_NUMERO: semanaNumeroPorId(ex.SEMANA_ID),
+        TIEMPO_MIN: ex.TIEMPO_MIN, INTENTOS_PERMITIDOS: ex.INTENTOS_PERMITIDOS, NOTA_MINIMA: ex.NOTA_MINIMA, ESTADO: ex.ESTADO,
+        PREGUNTAS_TEXTO: ep.preguntas.map(function (p) { return p.TEXTO; })
+      });
+    }
+    const paquete = {
+      exportadoEl: new Date().toISOString(),
+      semanas: state.semanas.map(function (s) { return { NUMERO: s.NUMERO, TITULO: s.TITULO, DESCRIPCION: s.DESCRIPCION || '', ESTADO: s.ESTADO || 'Activo' }; }),
+      autores: state.autores.map(function (a) { return { NOMBRE: a.NOMBRE, BIOGRAFIA: a.BIOGRAFIA || '', APORTE: a.APORTE || '', TEORIA: a.TEORIA || '', ESTADO: a.ESTADO || 'Activo', IMAGEN_URL: a.IMAGEN_URL || '' }; }),
+      material: state.material.map(function (m) { return { SEMANA_NUMERO: semanaNumeroPorId(m.SEMANA_ID), TEMA: m.TEMA || '', TITULO: m.TITULO, CONTENIDO: m.CONTENIDO || '', AUTOR: m.AUTOR || '', ESTADO: m.ESTADO || 'Activo', IMAGEN_URL: m.IMAGEN_URL || '', VIDEO_URL: m.VIDEO_URL || '', RECURSO_URL: m.RECURSO_URL || '' }; }),
+      estudiantes: state.estudiantes.map(function (e) { return { NOMBRE: e.NOMBRE, CORREO: e.CORREO, SEMANA_ACTUAL: e.SEMANA_ACTUAL || 1, PROGRESO: e.PROGRESO || 0, ESTADO: e.ESTADO || 'Activo' }; }),
+      preguntas: state.preguntas.map(function (p) {
+        return { TEXTO: p.TEXTO, TIPO: p.TIPO, SEMANA_NUMERO: semanaNumeroPorId(p.SEMANA_ID), DIFICULTAD: p.DIFICULTAD, EXPLICACION: p.EXPLICACION || '', ESTADO: p.ESTADO,
+          OPCIONES: (p.OPCIONES || []).map(function (o) { return { texto: o.TEXTO, esCorrecta: (o.ES_CORRECTA === true || o.ES_CORRECTA === 'TRUE') }; }),
+          RELACIONES: (p.RELACIONES || []).map(function (r) { return { a: r.COLUMNA_A, b: r.COLUMNA_B }; }),
+          RESPUESTA_CORRECTA: p.RESPUESTA_CORRECTA || '' };
+      }),
+      examenes: examenesConPreguntas
+    };
+    const blob = new Blob([JSON.stringify(paquete, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'banco-examenes-ugb-' + new Date().toISOString().slice(0, 10) + '.json';
+    a.click();
+    alertaFlotante('JSON exportado correctamente.');
+  } catch (err) {
+    console.error(err);
+    alertaFlotante('No fue posible exportar el JSON.', 'danger');
+  } finally {
+    ocultarCarga();
+  }
+}
+function semanaNumeroPorId(id) {
+  const s = state.semanas.find(function (x) { return String(x.ID) === String(id); });
+  return s ? s.NUMERO : null;
+}
+function semanaIdPorNumero(numero, mapaSemanas) { return mapaSemanas[numero]; }
+
+async function importarBancoJSON(evento) {
+  const file = evento.target.files[0];
+  evento.target.value = '';
+  if (!file) return;
+  const statusEl = document.getElementById('import-json-status');
+  mostrarCarga(null);
+  document.getElementById('loading-overlay-text').textContent = 'Importando banco de datos...';
+  const sub = document.getElementById('loading-overlay-sub');
+  try {
+    const texto = await file.text();
+    const paquete = JSON.parse(texto);
+    const contadores = { semanas: 0, autores: 0, material: 0, preguntas: 0, examenes: 0, estudiantes: 0 };
+    const mapaSemanas = {}; // numero -> nuevo ID
+    const mapaPreguntasPorTexto = {}; // texto -> nuevo ID
+
+    sub.textContent = 'Creando semanas...';
+    for (const s of (paquete.semanas || [])) {
+      const r = await api('createWeek', { NUMERO: s.NUMERO, TITULO: s.TITULO, DESCRIPCION: s.DESCRIPCION || '', ESTADO: s.ESTADO || 'Activo' });
+      mapaSemanas[s.NUMERO] = r.data.ID; contadores.semanas++;
+    }
+    sub.textContent = 'Creando autores...';
+    for (const a of (paquete.autores || [])) {
+      await api('createAuthor', { NOMBRE: a.NOMBRE, BIOGRAFIA: a.BIOGRAFIA || '', APORTE: a.APORTE || '', TEORIA: a.TEORIA || '', ESTADO: a.ESTADO || 'Activo', IMAGEN_URL: a.IMAGEN_URL || '' });
+      contadores.autores++;
+    }
+    sub.textContent = 'Creando material...';
+    for (const m of (paquete.material || [])) {
+      await api('createMaterial', { SEMANA_ID: mapaSemanas[m.SEMANA_NUMERO] || '', TEMA: m.TEMA || '', TITULO: m.TITULO, CONTENIDO: m.CONTENIDO || '', AUTOR: m.AUTOR || '', ESTADO: m.ESTADO || 'Activo', IMAGEN_URL: m.IMAGEN_URL || '', VIDEO_URL: m.VIDEO_URL || '', RECURSO_URL: m.RECURSO_URL || '' });
+      contadores.material++;
+    }
+    sub.textContent = 'Creando preguntas...';
+    for (const p of (paquete.preguntas || [])) {
+      const r = await api('createQuestion', {
+        texto: p.TEXTO, tipo: p.TIPO, semanaId: mapaSemanas[p.SEMANA_NUMERO] || '', dificultad: p.DIFICULTAD,
+        explicacion: p.EXPLICACION || '', estado: p.ESTADO || 'Activo',
+        opciones: p.OPCIONES || [], relaciones: p.RELACIONES || [], respuestaCorrecta: p.RESPUESTA_CORRECTA || ''
+      });
+      mapaPreguntasPorTexto[p.TEXTO] = r.data.ID; contadores.preguntas++;
+    }
+    sub.textContent = 'Creando estudiantes de prueba...';
+    for (const e of (paquete.estudiantes || [])) {
+      await api('createStudent', { NOMBRE: e.NOMBRE, CORREO: e.CORREO, SEMANA_ACTUAL: e.SEMANA_ACTUAL || 1, PROGRESO: e.PROGRESO || 0, ESTADO: e.ESTADO || 'Activo' });
+      contadores.estudiantes++;
+    }
+    sub.textContent = 'Creando exámenes y vinculando preguntas...';
+    for (const ex of (paquete.examenes || [])) {
+      const creado = (await api('createExam', {
+        nombre: ex.NOMBRE, tipo: ex.TIPO, semanaId: mapaSemanas[ex.SEMANA_NUMERO] || '',
+        tiempoMin: ex.TIEMPO_MIN, intentosPermitidos: ex.INTENTOS_PERMITIDOS, notaMinima: ex.NOTA_MINIMA
+      })).data;
+      const idsPreguntas = (ex.PREGUNTAS_TEXTO || []).map(function (t) { return mapaPreguntasPorTexto[t]; }).filter(Boolean);
+      await api('updateExam', { id: creado.ID, preguntas: idsPreguntas, estado: ex.ESTADO || 'Activo' });
+      contadores.examenes++;
+    }
+
+    await cargarTodo();
+    renderWeeksAdmin(); renderMaterialTable(); renderAuthorsAdmin(); renderQuestionsTable(); renderExamsTable(); renderStudentsTable();
+    const resumen = 'Semanas: ' + contadores.semanas + ' · Autores: ' + contadores.autores + ' · Material: ' + contadores.material + ' · Preguntas: ' + contadores.preguntas + ' · Exámenes: ' + contadores.examenes + ' · Estudiantes: ' + contadores.estudiantes;
+    statusEl.textContent = '✅ Importación completa — ' + resumen;
+    alertaFlotante('Importación completa: ' + resumen, 'success');
+  } catch (err) {
+    console.error(err);
+    statusEl.textContent = '⚠ Error al importar: revisa que el archivo tenga el formato correcto.';
+    alertaFlotante('No fue posible importar el JSON.', 'danger');
+  } finally {
+    ocultarCarga();
+  }
+}
+
 async function abrirConstructor(examenId, nombre) {
   state.constructorExamenId = examenId;
   const ep = await api('getExamForStudent', { id: examenId });
@@ -1441,19 +1795,51 @@ function renderResultsTable() {
 async function verDetalleResultado(id, estudianteNombre, examenNombre) {
   state.resultadoActualId = id;
   const res = await api('getResultDetail', { id: id });
+  state.detalleActual = res;
   document.getElementById('detalle-titulo').textContent = '📊 Resultado de ' + estudianteNombre;
   document.getElementById('detalle-sub').textContent = examenNombre + ' · ' + res.resultado.PUNTUACION + '% (' + res.resultado.CORRECTAS + '/' + (Number(res.resultado.CORRECTAS) + Number(res.resultado.INCORRECTAS)) + ' correctas)';
-  renderDetalleBody(res);
+  state.detalleEditable = false;
+  renderDetalleBody(res, false);
   document.getElementById('btn-mostrar-respuestas').style.display = res.respuestasVisibles ? 'none' : 'inline-flex';
+  document.getElementById('btn-editar-resultado').style.display = 'inline-flex';
+  document.getElementById('btn-guardar-resultado').style.display = 'none';
   openModal('modal-detalle-resultado');
 }
-function renderDetalleBody(res) {
+function activarEdicionResultado() {
+  state.detalleEditable = true;
+  renderDetalleBody(state.detalleActual, true);
+  document.getElementById('btn-editar-resultado').style.display = 'none';
+  document.getElementById('btn-guardar-resultado').style.display = 'inline-flex';
+  alertaFlotante('Marca cada respuesta como correcta o incorrecta y guarda los cambios.', 'warning');
+}
+async function guardarEdicionResultado() {
+  const checks = document.querySelectorAll('.detalle-check-correcta');
+  let correctas = 0, incorrectas = 0;
+  const detalle = Array.from(checks).map(function (chk) {
+    const esCorrecta = chk.checked;
+    if (esCorrecta) correctas++; else incorrectas++;
+    return {
+      preguntaId: chk.dataset.preguntaId, texto: chk.dataset.texto, respuestaEstudiante: chk.dataset.respuesta,
+      esCorrecta: esCorrecta, respuestaCorrecta: chk.dataset.respuestaCorrecta, explicacion: chk.dataset.explicacion
+    };
+  });
+  const total = correctas + incorrectas || 1;
+  const puntuacion = Math.round((correctas / total) * 100);
+  await api('updateResultado', { id: state.resultadoActualId, data: { PUNTUACION: puntuacion, CORRECTAS: correctas, INCORRECTAS: incorrectas, DETALLE: detalle } });
+  alertaFlotante('Calificación corregida: ' + puntuacion + '% (' + correctas + '/' + total + ').', 'success');
+  closeModal('modal-detalle-resultado');
+  await cargarTodo(); renderResultsTable();
+}
+function renderDetalleBody(res, editable) {
   document.getElementById('detalle-body').innerHTML = res.detalle.map(function (d, i) {
-    let html = '<div class="answer-block"><strong>Pregunta ' + (i + 1) + ':</strong> ' + d.texto + '<br>Respuesta: ' + d.respuestaEstudiante + ' ' + (d.esCorrecta ? '<span class="badge badge-success">✅ Correcto</span>' : '<span class="badge badge-danger">❌ Incorrecto</span>');
-    if (!d.esCorrecta && d.respuestaCorrecta !== null && d.respuestaCorrecta !== undefined) {
+    const chk = editable
+      ? '<input type="checkbox" class="detalle-check-correcta" ' + (d.esCorrecta ? 'checked' : '') + ' data-pregunta-id="' + (d.preguntaId || '') + '" data-texto="' + (d.texto || '').replace(/"/g, '&quot;') + '" data-respuesta="' + (d.respuestaEstudiante || '').replace(/"/g, '&quot;') + '" data-respuesta-correcta="' + (d.respuestaCorrecta || '').replace(/"/g, '&quot;') + '" data-explicacion="' + (d.explicacion || '').replace(/"/g, '&quot;') + '" style="margin-right:8px;"> <label>Marcar como correcta</label>'
+      : (d.esCorrecta ? '<span class="badge badge-success">✅ Correcto</span>' : '<span class="badge badge-danger">❌ Incorrecto</span>');
+    let html = '<div class="answer-block"><strong>Pregunta ' + (i + 1) + ':</strong> ' + d.texto + '<br>Respuesta: ' + d.respuestaEstudiante + ' ' + chk;
+    if (!d.esCorrecta && d.respuestaCorrecta !== null && d.respuestaCorrecta !== undefined && d.respuestaCorrecta !== '') {
       html += '<br><small>Correcta: ' + d.respuestaCorrecta + '</small>';
-      if (d.explicacion) html += '<br><small style="color:var(--text-secondary);">Explicación: ' + d.explicacion + '</small>';
     }
+    if (d.explicacion) html += '<br><small style="color:var(--text-secondary);">Explicación: ' + d.explicacion + '</small>';
     return html + '</div>';
   }).join('');
 }
@@ -1464,8 +1850,27 @@ async function verificarClaveRespuestas() {
   closeModal('modal-clave-respuestas');
   document.getElementById('clave-respuestas-input').value = '';
   const detalle = await api('getResultDetail', { id: state.resultadoActualId, clave: clave });
-  renderDetalleBody(detalle);
+  renderDetalleBody(detalle, false);
   document.getElementById('btn-mostrar-respuestas').style.display = 'none';
+}
+
+/* ============================================================
+   ACCESO PROTEGIDO AL ÁREA DOCENTE (código rápido: 747)
+============================================================ */
+function pedirClaveAreaDocente() {
+  document.getElementById('clave-panel-docente-input').value = '';
+  document.getElementById('clave-panel-docente-error').innerHTML = '';
+  openModal('modal-clave-panel-docente');
+  setTimeout(function () { document.getElementById('clave-panel-docente-input').focus(); }, 100);
+}
+function verificarClavePanelDocente() {
+  const clave = document.getElementById('clave-panel-docente-input').value;
+  if (clave !== '747') {
+    showAlertIn('clave-panel-docente-error', 'Código incorrecto.');
+    return;
+  }
+  closeModal('modal-clave-panel-docente');
+  openModal('modal-area-docente');
 }
 
 /* ============================================================
@@ -1497,18 +1902,48 @@ async function renderConfig() {
   document.getElementById('cfg-intentos').value = cfg.INTENTOS_DEFAULT || 3;
   document.getElementById('cfg-nota').value = cfg.NOTA_MINIMA || 70;
   document.getElementById('cfg-codigo-docente').value = cfg.CODIGO_DOCENTE || '';
+  document.getElementById('cfg-requiere-aprobacion').checked = cfg.REQUIERE_APROBACION_ESTUDIANTES === true;
+  document.getElementById('cfg-dominio-institucional').value = cfg.DOMINIO_INSTITUCIONAL || '';
 }
 async function guardarConfigGeneral() { await api('updateConfig', { NOMBRE_CURSO: document.getElementById('cfg-nombre-curso').value, ANIO: document.getElementById('cfg-anio').value }); alertaFlotante('Configuración guardada.'); }
 async function guardarConfigExamenes() { await api('updateConfig', { TIEMPO_DEFAULT: document.getElementById('cfg-tiempo').value, INTENTOS_DEFAULT: document.getElementById('cfg-intentos').value, NOTA_MINIMA: document.getElementById('cfg-nota').value }); alertaFlotante('Configuración guardada.'); }
+async function guardarConfigEstudiantes() { await api('updateConfig', { REQUIERE_APROBACION_ESTUDIANTES: document.getElementById('cfg-requiere-aprobacion').checked, DOMINIO_INSTITUCIONAL: document.getElementById('cfg-dominio-institucional').value.trim() }); alertaFlotante('Configuración de validación guardada.'); }
 async function regenerarCodigo() { const res = await api('regenerateTeacherCode'); document.getElementById('cfg-codigo-docente').value = res.codigo; alertaFlotante('Código regenerado.'); }
+async function inicializarBaseDatos() {
+  const btn = document.getElementById('btn-init-db');
+  const original = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sincronizando base de datos...';
+  document.getElementById('init-db-result').innerHTML = '';
+  try {
+    const res = await api('initDatabase');
+    const tipo = (res.hojasCreadas > 0 || res.columnasAgregadas > 0) ? 'success' : 'success';
+    let detalleHtml = '';
+    if (res.detalle && res.detalle.length) {
+      detalleHtml = '<ul style="margin:8px 0 0 18px;font-size:0.85rem;color:var(--text-secondary);">' + res.detalle.map(function (d) { return '<li>' + d + '</li>'; }).join('') + '</ul>';
+    }
+    document.getElementById('init-db-result').innerHTML = '<div class="alert alert-' + tipo + '"><i class="fa-solid fa-circle-check"></i><span>' + res.mensaje + detalleHtml + '</span></div>';
+    alertaFlotante(res.mensaje);
+    await cargarTodo();
+  } catch (err) {
+    document.getElementById('init-db-result').innerHTML = '<div class="alert alert-danger"><i class="fa-solid fa-circle-exclamation"></i><span>No fue posible inicializar la base de datos. Intenta nuevamente.</span></div>';
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = original;
+  }
+}
 
 /* ============================================================
    TOMAR EXAMEN (ESTUDIANTE)
 ============================================================ */
 async function iniciarExamen(examenId) {
   if (!state.estudiante) { alertaFlotante('Identifícate primero para tomar el examen.', 'warning'); openModal('modal-estudiante-id'); return; }
+  if (state.estudiante.ESTADO && state.estudiante.ESTADO !== 'Activo') {
+    alertaFlotante(state.estudiante.ESTADO === 'Pendiente' ? 'Tu cuenta aún está pendiente de aprobación docente.' : 'Tu cuenta no está activa. Contacta a tu docente.', 'danger');
+    return;
+  }
   const res = await api('getExamForStudent', { id: examenId });
-  state.intentoActual = { examenId: examenId, inicio: new Date().toISOString(), respuestas: {}, preguntas: res.preguntas };
+  state.intentoActual = { examenId: examenId, inicio: new Date().toISOString(), respuestas: {}, preguntas: res.preguntas, nombreExamen: res.examen.NOMBRE };
   document.getElementById('tomar-examen-titulo').textContent = res.examen.NOMBRE;
   document.getElementById('tomar-examen-sub').textContent = res.preguntas.length + ' preguntas · ' + res.examen.TIEMPO_MIN + ' minutos';
   document.getElementById('tomar-examen-body').innerHTML = res.preguntas.map(preguntaEstudianteHtml).join('');
@@ -1538,10 +1973,12 @@ function registrarRespuestaRelacion(pid) { /* simplificado: se registra el estad
 async function enviarIntento() {
   const respuestas = Object.keys(state.intentoActual.respuestas).map(function (pid) { return { preguntaId: pid, respuesta: state.intentoActual.respuestas[pid] }; });
   const tiempoSeg = Math.round((Date.now() - new Date(state.intentoActual.inicio).getTime()) / 1000);
+  const nombreExamen = state.intentoActual.nombreExamen || 'Examen';
   const res = await api('submitAttempt', { examenId: state.intentoActual.examenId, estudianteId: state.estudiante.ID, respuestas: respuestas, inicio: state.intentoActual.inicio, tiempoSeg: tiempoSeg, numeroIntento: 1 });
   closeModal('modal-tomar-examen');
   alertaFlotante('Examen enviado. Obtuviste ' + res.puntuacion + '% (' + res.correctas + ' correctas).', res.puntuacion >= 70 ? 'success' : 'warning');
   cargarMisResultados();
+  if (res.id) { await verResultadoPropio(res.id, nombreExamen); }
 }
 
 /* ============================================================
@@ -1555,6 +1992,362 @@ window.addEventListener('DOMContentLoaded', function () {
   const savedTeacher = sessionStorage.getItem('ugb_docente');
   if (savedTeacher) { state.docente = JSON.parse(savedTeacher); entrarPanelDocente(); }
 });
+</script>
+
+<!-- ================================================================
+     BACKEND FIREBASE (Firestore) — módulo independiente.
+     Solo se activa cuando BACKEND_MODE === 'firebase' (ver arriba).
+     Implementa las MISMAS acciones y formas de respuesta que el
+     backend de Apps Script (codigo.gs), para que el resto del HTML
+     no necesite ningún cambio.
+================================================================= -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getFirestore, collection, doc, getDoc, getDocs, addDoc, setDoc, updateDoc, deleteDoc,
+  query, where
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {
+  getStorage, ref, uploadBytes, getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+
+let storageApp = null;
+function ensureStorage() {
+  if (storageApp) return storageApp;
+  storageApp = getStorage(app || (app = initializeApp(window.FIREBASE_CONFIG)));
+  return storageApp;
+}
+async function subirImagen(file, carpeta) {
+  const st = ensureStorage();
+  const nombreLimpio = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+  const ruta = (carpeta || 'imagenes') + '/' + Date.now() + '_' + nombreLimpio;
+  const r = ref(st, ruta);
+  await uploadBytes(r, file);
+  return await getDownloadURL(r);
+}
+
+let app = null, db = null;
+function ensureInit() {
+  if (db) return db;
+  app = initializeApp(window.FIREBASE_CONFIG);
+  db = getFirestore(app);
+  return db;
+}
+
+/* ---------- utilidades ---------- */
+function snap(d) { return Object.assign({ ID: d.id }, d.data()); }
+function limpiar(obj) {
+  const out = {};
+  Object.keys(obj || {}).forEach(function (k) { if (k !== 'id' && obj[k] !== undefined) out[k] = obj[k]; });
+  return out;
+}
+async function todos(col) { const s = await getDocs(collection(ensureInit(), col)); return s.docs.map(snap); }
+async function unDoc(col, id) { const d = await getDoc(doc(ensureInit(), col, id)); return d.exists() ? snap(d) : null; }
+function idAleatorio(n) { const c = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let s = ''; for (let i = 0; i < (n || 6); i++) s += c[Math.floor(Math.random() * c.length)]; return s; }
+async function hashPass(texto) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(texto));
+  return Array.from(new Uint8Array(buf)).map(function (b) { return b.toString(16).padStart(2, '0'); }).join('');
+}
+function fechaHoy() { return new Date().toISOString().slice(0, 10); }
+function ok(extra) { return Object.assign({ success: true }, extra || {}); }
+
+/* ---------- normalización de una pregunta a la forma que ya usa el HTML ---------- */
+function normalizarPregunta(p, ocultarRespuestas) {
+  const opciones = (p.OPCIONES || []).map(function (o) {
+    const base = { ID: o.ID, TEXTO: o.TEXTO };
+    if (!ocultarRespuestas) base.ES_CORRECTA = o.ES_CORRECTA;
+    return base;
+  });
+  const out = Object.assign({}, p, { OPCIONES: opciones });
+  if (ocultarRespuestas) delete out.RESPUESTA_CORRECTA;
+  return out;
+}
+
+/* ================================================================
+   INICIALIZAR / REPARAR BASE DE DATOS (gesto oculto Ctrl + doble clic)
+================================================================= */
+async function initDatabase() {
+  ensureInit();
+  const detalle = [];
+  const cfgRef = doc(db, 'config', 'general');
+  const cfgSnap = await getDoc(cfgRef);
+  if (!cfgSnap.exists()) {
+    await setDoc(cfgRef, {
+      NOMBRE_CURSO: 'Sociología UGB', ANIO: String(new Date().getFullYear()),
+      TIEMPO_DEFAULT: 30, INTENTOS_DEFAULT: 3, NOTA_MINIMA: 70, CODIGO_DOCENTE: idAleatorio(8)
+    });
+    detalle.push('Documento config/general creado con valores por defecto.');
+  } else {
+    const data = cfgSnap.data();
+    const faltantes = {};
+    ['NOMBRE_CURSO', 'ANIO', 'TIEMPO_DEFAULT', 'INTENTOS_DEFAULT', 'NOTA_MINIMA', 'CODIGO_DOCENTE'].forEach(function (campo) {
+      if (data[campo] === undefined) faltantes[campo] = campo === 'CODIGO_DOCENTE' ? idAleatorio(8) : (campo === 'NOMBRE_CURSO' ? 'Sociología UGB' : 0);
+    });
+    if (Object.keys(faltantes).length) { await updateDoc(cfgRef, faltantes); detalle.push('Campos agregados a config/general: ' + Object.keys(faltantes).join(', ')); }
+    else detalle.push('config/general ya estaba completo.');
+  }
+  const colecciones = ['docentes', 'estudiantes', 'semanas', 'material', 'autores', 'preguntas', 'examenes', 'resultados'];
+  for (const c of colecciones) {
+    const s = await getDocs(collection(db, c));
+    detalle.push('Colección "' + c + '": ' + s.size + ' documento(s) — lista para usarse.');
+  }
+  const cfgFinal = (await getDoc(cfgRef)).data();
+  return ok({ mensaje: 'Base de datos de Firebase verificada e inicializada correctamente.', detalle: detalle, hojasCreadas: cfgSnap.exists() ? 0 : 1, codigoDocente: cfgFinal.CODIGO_DOCENTE });
+}
+
+/* ================================================================
+   DISPATCH PRINCIPAL — llamado desde api(action, payload)
+================================================================= */
+const FirebaseBackend = {
+  initDatabase: initDatabase,
+  subirImagen: subirImagen,
+  ejecutar: async function (action, p) {
+    ensureInit();
+    switch (action) {
+
+      /* ---------- AUTENTICACIÓN DOCENTE ---------- */
+      case 'loginTeacher': {
+        const s = await getDocs(query(collection(db, 'docentes'), where('CORREO', '==', p.correo)));
+        if (s.empty) throw new Error('Credenciales incorrectas');
+        const docTeacher = snap(s.docs[0]);
+        const hash = await hashPass(p.contrasena);
+        if (hash !== docTeacher.CONTRASENA_HASH) throw new Error('Credenciales incorrectas');
+        if (docTeacher.ESTADO === 'Pendiente') return ok({ pendiente: true, mensaje: 'Tu cuenta aún no ha sido aprobada por el administrador.' });
+        if (docTeacher.ESTADO === 'Denegado') return ok({ denegado: true, mensaje: 'Tu acceso fue denegado.' });
+        delete docTeacher.CONTRASENA_HASH;
+        return ok({ usuario: docTeacher });
+      }
+      case 'registerTeacher': {
+        const errores = {};
+        if (!p.nombre) errores.nombre = 'Requerido';
+        if (!p.apellido) errores.apellido = 'Requerido';
+        if (!p.correo) errores.correo = 'Requerido';
+        if (!p.contrasena || p.contrasena.length < 6) errores.contrasena = 'Mínimo 6 caracteres';
+        if (p.contrasena !== p.confirmarContrasena) errores.confirmarContrasena = 'No coincide';
+        const cfg = await getDoc(doc(db, 'config', 'general'));
+        if (!cfg.exists() || p.codigo !== cfg.data().CODIGO_DOCENTE) errores.codigo = 'Código de acceso incorrecto';
+        if (Object.keys(errores).length) return ok({ errores: errores });
+        const hash = await hashPass(p.contrasena);
+        await addDoc(collection(db, 'docentes'), { NOMBRE: p.nombre, APELLIDO: p.apellido, CORREO: p.correo, CONTRASENA_HASH: hash, ESTADO: 'Pendiente' });
+        return ok({});
+      }
+      case 'regenerateTeacherCode': {
+        const codigo = idAleatorio(8);
+        await setDoc(doc(db, 'config', 'general'), { CODIGO_DOCENTE: codigo }, { merge: true });
+        return ok({ codigo: codigo });
+      }
+
+      /* ---------- ESTUDIANTE ---------- */
+      case 'loginStudent': {
+        const s = await getDocs(query(collection(db, 'estudiantes'), where('CORREO', '==', p.correo)));
+        let est;
+        if (s.empty) {
+          const cfg = (await getDoc(doc(db, 'config', 'general'))).data() || {};
+          const dominio = (cfg.DOMINIO_INSTITUCIONAL || '').trim().toLowerCase();
+          const cumpleDominio = dominio && p.correo.toLowerCase().endsWith(dominio);
+          const requiereAprobacion = cfg.REQUIERE_APROBACION_ESTUDIANTES === true;
+          const estadoInicial = (requiereAprobacion && !cumpleDominio) ? 'Pendiente' : 'Activo';
+          const r = await addDoc(collection(db, 'estudiantes'), { NOMBRE: p.nombre, CORREO: p.correo, SEMANA_ACTUAL: 1, PROGRESO: 0, ESTADO: estadoInicial });
+          est = { ID: r.id, NOMBRE: p.nombre, CORREO: p.correo, SEMANA_ACTUAL: 1, PROGRESO: 0, ESTADO: estadoInicial };
+        } else {
+          est = snap(s.docs[0]);
+        }
+        return ok({ usuario: est });
+      }
+      case 'getMyResults': {
+        const s = await getDocs(query(collection(db, 'resultados'), where('ESTUDIANTE_ID', '==', p.estudianteId)));
+        return ok({ data: s.docs.map(snap) });
+      }
+
+      /* ---------- CRUD GENÉRICO: semanas, autores, material, estudiantes, preguntas, exámenes ---------- */
+      case 'getWeeks': return ok({ data: await todos('semanas') });
+      case 'createWeek': { const r = await addDoc(collection(db, 'semanas'), limpiar(p)); return ok({ data: await unDoc('semanas', r.id) }); }
+      case 'updateWeek': { await updateDoc(doc(db, 'semanas', p.id), limpiar(p.data)); return ok({ data: await unDoc('semanas', p.id) }); }
+      case 'deleteWeek': await deleteDoc(doc(db, 'semanas', p.id)); return ok({});
+
+      case 'getAuthors': return ok({ data: await todos('autores') });
+      case 'createAuthor': { const r = await addDoc(collection(db, 'autores'), limpiar(p)); return ok({ data: await unDoc('autores', r.id) }); }
+      case 'updateAuthor': { await updateDoc(doc(db, 'autores', p.id), limpiar(p.data)); return ok({ data: await unDoc('autores', p.id) }); }
+      case 'deleteAuthor': await deleteDoc(doc(db, 'autores', p.id)); return ok({});
+
+      case 'getMaterial': return ok({ data: await todos('material') });
+      case 'createMaterial': { const r = await addDoc(collection(db, 'material'), limpiar(p)); return ok({ data: await unDoc('material', r.id) }); }
+      case 'updateMaterial': { await updateDoc(doc(db, 'material', p.id), limpiar(p.data)); return ok({ data: await unDoc('material', p.id) }); }
+      case 'deleteMaterial': await deleteDoc(doc(db, 'material', p.id)); return ok({});
+
+      case 'getStudents': return ok({ data: await todos('estudiantes') });
+      case 'createStudent': { const r = await addDoc(collection(db, 'estudiantes'), limpiar(Object.assign({ SEMANA_ACTUAL: 1, PROGRESO: 0, ESTADO: 'Activo' }, p))); return ok({ data: await unDoc('estudiantes', r.id) }); }
+      case 'updateStudent': { await updateDoc(doc(db, 'estudiantes', p.id), limpiar(p.data)); return ok({ data: await unDoc('estudiantes', p.id) }); }
+      case 'deleteStudent': await deleteDoc(doc(db, 'estudiantes', p.id)); return ok({});
+
+      case 'getQuestions': return ok({ data: await todos('preguntas') });
+      case 'createQuestion': {
+        const cuerpo = { TEXTO: p.texto, TIPO: p.tipo, SEMANA_ID: p.semanaId, DIFICULTAD: p.dificultad, EXPLICACION: p.explicacion || '', ESTADO: p.estado || 'Activo', RESPUESTA_CORRECTA: p.respuestaCorrecta || '', RELACIONES: (p.relaciones || []).map(function (r) { return { COLUMNA_A: r.a, COLUMNA_B: r.b }; }) };
+        cuerpo.OPCIONES = (p.opciones || []).map(function (o) { return { ID: idAleatorio(6), TEXTO: o.texto, ES_CORRECTA: !!o.esCorrecta }; });
+        const r = await addDoc(collection(db, 'preguntas'), cuerpo);
+        return ok({ data: await unDoc('preguntas', r.id) });
+      }
+      case 'updateQuestion': {
+        const cuerpo = { TEXTO: p.texto, TIPO: p.tipo, SEMANA_ID: p.semanaId, DIFICULTAD: p.dificultad, EXPLICACION: p.explicacion || '', ESTADO: p.estado || 'Activo', RESPUESTA_CORRECTA: p.respuestaCorrecta || '', RELACIONES: (p.relaciones || []).map(function (r) { return { COLUMNA_A: r.a, COLUMNA_B: r.b }; }) };
+        cuerpo.OPCIONES = (p.opciones || []).map(function (o) { return { ID: idAleatorio(6), TEXTO: o.texto, ES_CORRECTA: !!o.esCorrecta }; });
+        await updateDoc(doc(db, 'preguntas', p.id), cuerpo);
+        return ok({ data: await unDoc('preguntas', p.id) });
+      }
+      case 'deleteQuestion': await deleteDoc(doc(db, 'preguntas', p.id)); return ok({});
+
+      case 'getExams': {
+        const examenes = await todos('examenes');
+        const resultados = await todos('resultados');
+        return ok({
+          data: examenes.map(function (ex) {
+            const propios = resultados.filter(function (r) { return r.EXAMEN_ID === ex.ID; });
+            const prom = propios.length ? Math.round(propios.reduce(function (a, r) { return a + Number(r.PUNTUACION); }, 0) / propios.length) : 0;
+            return Object.assign({}, ex, { TOTAL_PREGUNTAS: (ex.PREGUNTA_IDS || []).length, PROMEDIO: prom });
+          })
+        });
+      }
+      case 'createExam': { const r = await addDoc(collection(db, 'examenes'), { NOMBRE: p.nombre, TIPO: p.tipo, SEMANA_ID: p.semanaId || '', TIEMPO_MIN: Number(p.tiempoMin), INTENTOS_PERMITIDOS: Number(p.intentosPermitidos), NOTA_MINIMA: Number(p.notaMinima), ESTADO: 'Borrador', PREGUNTA_IDS: [] }); return ok({ data: await unDoc('examenes', r.id) }); }
+      case 'updateExam': {
+        const cambios = {};
+        if (p.nombre !== undefined) cambios.NOMBRE = p.nombre;
+        if (p.tipo !== undefined) cambios.TIPO = p.tipo;
+        if (p.semanaId !== undefined) cambios.SEMANA_ID = p.semanaId;
+        if (p.tiempoMin !== undefined) cambios.TIEMPO_MIN = Number(p.tiempoMin);
+        if (p.intentosPermitidos !== undefined) cambios.INTENTOS_PERMITIDOS = Number(p.intentosPermitidos);
+        if (p.notaMinima !== undefined) cambios.NOTA_MINIMA = Number(p.notaMinima);
+        if (p.estado !== undefined) cambios.ESTADO = p.estado;
+        if (p.preguntas !== undefined) cambios.PREGUNTA_IDS = p.preguntas;
+        await updateDoc(doc(db, 'examenes', p.id), cambios);
+        return ok({ data: await unDoc('examenes', p.id) });
+      }
+      case 'deleteExam': await deleteDoc(doc(db, 'examenes', p.id)); return ok({});
+
+      case 'getExamForStudent': {
+        const ex = await unDoc('examenes', p.id);
+        const ids = ex.PREGUNTA_IDS || [];
+        const preguntas = [];
+        for (const id of ids) { const pr = await unDoc('preguntas', id); if (pr) preguntas.push(normalizarPregunta(pr, true)); }
+        return ok({ examen: ex, preguntas: preguntas });
+      }
+
+      /* ---------- INTENTO DE EXAMEN Y CALIFICACIÓN ---------- */
+      case 'submitAttempt': {
+        const ex = await unDoc('examenes', p.examenId);
+        const est = await unDoc('estudiantes', p.estudianteId);
+        let correctas = 0, incorrectas = 0;
+        const detalle = [];
+        for (const r of p.respuestas) {
+          const preg = await unDoc('preguntas', r.preguntaId);
+          if (!preg) continue;
+          const resultado = calificarRespuesta(preg, r.respuesta);
+          if (resultado.esCorrecta) correctas++; else incorrectas++;
+          detalle.push({ preguntaId: preg.ID, texto: preg.TEXTO, respuestaEstudiante: resultado.textoRespuesta, esCorrecta: resultado.esCorrecta, respuestaCorrecta: resultado.textoCorrecta, explicacion: preg.EXPLICACION || '' });
+        }
+        const total = correctas + incorrectas || 1;
+        const puntuacion = Math.round((correctas / total) * 100);
+        const cuerpo = {
+          EXAMEN_ID: ex.ID, EXAMEN_NOMBRE: ex.NOMBRE, ESTUDIANTE_ID: est.ID, ESTUDIANTE_NOMBRE: est.NOMBRE,
+          PUNTUACION: puntuacion, CORRECTAS: correctas, INCORRECTAS: incorrectas, FECHA: fechaHoy(),
+          DETALLE: detalle, RESPUESTAS_VISIBLES: true, NUMERO_INTENTO: p.numeroIntento || 1, TIEMPO_SEG: p.tiempoSeg || 0
+        };
+        const nuevoResultado = await addDoc(collection(db, 'resultados'), cuerpo);
+        return ok({ id: nuevoResultado.id, puntuacion: puntuacion, correctas: correctas, incorrectas: incorrectas });
+      }
+
+      case 'getResults': return ok({ data: await todos('resultados') });
+      case 'updateResultado': { await updateDoc(doc(db, 'resultados', p.id), limpiar(p.data)); return ok({ data: await unDoc('resultados', p.id) }); }
+      case 'getResultDetail': {
+        const r = await unDoc('resultados', p.id);
+        const visibles = true;
+        return ok({ resultado: r, detalle: r.DETALLE || [], respuestasVisibles: visibles });
+      }
+      case 'verifyAnswersPassword': {
+        const cfg = await getDoc(doc(db, 'config', 'general'));
+        const claveGuardada = cfg.exists() ? (cfg.data().CLAVE_RESPUESTAS || 'ugb2026') : 'ugb2026';
+        return ok({ ok: p.clave === claveGuardada });
+      }
+
+      /* ---------- ESTADÍSTICAS ---------- */
+      case 'getStatistics': {
+        const resultados = await todos('resultados');
+        const semanas = await todos('semanas');
+        const examenes = await todos('examenes');
+        const estudiantes = await todos('estudiantes');
+        const preguntas = await todos('preguntas');
+        const porSemana = {};
+        resultados.forEach(function (r) {
+          const ex = examenes.find(function (e) { return e.ID === r.EXAMEN_ID; });
+          const sem = ex ? semanas.find(function (s) { return s.ID === ex.SEMANA_ID; }) : null;
+          const numero = sem ? sem.NUMERO : 0;
+          if (!porSemana[numero]) porSemana[numero] = [];
+          porSemana[numero].push(Number(r.PUNTUACION));
+        });
+        const promedioPorSemana = Object.keys(porSemana).sort(function (a, b) { return a - b; }).map(function (n) {
+          const arr = porSemana[n]; return { semana: n, promedio: Math.round(arr.reduce(function (a, b) { return a + b; }, 0) / arr.length) };
+        });
+        const conteoFallos = {};
+        resultados.forEach(function (r) {
+          (r.DETALLE || []).forEach(function (d) {
+            if (!d.esCorrecta) { const k = d.preguntaId; conteoFallos[k] = conteoFallos[k] || { texto: d.texto, fallos: 0 }; conteoFallos[k].fallos++; }
+          });
+        });
+        const preguntasMasFalladas = Object.values(conteoFallos).sort(function (a, b) { return b.fallos - a.fallos; }).slice(0, 5);
+        const distribucion = { excelente: 0, bueno: 0, regular: 0, bajo: 0 };
+        resultados.forEach(function (r) {
+          const p = Number(r.PUNTUACION);
+          if (p >= 90) distribucion.excelente++; else if (p >= 70) distribucion.bueno++; else if (p >= 50) distribucion.regular++; else distribucion.bajo++;
+        });
+        const promedioGeneral = resultados.length ? Math.round(resultados.reduce(function (a, r) { return a + Number(r.PUNTUACION); }, 0) / resultados.length) : 0;
+        return ok({
+          promedioPorSemana: promedioPorSemana, preguntasMasFalladas: preguntasMasFalladas, distribucion: distribucion, recientes: resultados.slice(-8).reverse(),
+          totalEstudiantes: estudiantes.length, estudiantesActivos: estudiantes.filter(function (e) { return e.ESTADO === 'Activo'; }).length,
+          estudiantesPendientes: estudiantes.filter(function (e) { return e.ESTADO === 'Pendiente'; }).length,
+          totalPreguntas: preguntas.length, totalExamenes: examenes.length, examenesRealizados: resultados.length, promedioGeneral: promedioGeneral
+        });
+      }
+
+      /* ---------- CONFIGURACIÓN ---------- */
+      case 'getConfig': { const d = await getDoc(doc(db, 'config', 'general')); return ok({ data: d.exists() ? d.data() : {} }); }
+      case 'updateConfig': { await setDoc(doc(db, 'config', 'general'), p, { merge: true }); return ok({}); }
+
+      case 'initDatabase': return await initDatabase();
+
+      default: throw new Error('Acción no implementada en el backend de Firebase: ' + action);
+    }
+  }
+};
+
+/* ---------- calificación por tipo de pregunta ---------- */
+function calificarRespuesta(preg, respuesta) {
+  const tipo = preg.TIPO;
+  if (['VERDADERO_FALSO', 'SELECCION_MULTIPLE', 'IDENTIFICAR_AUTOR', 'CASO_PRACTICO'].indexOf(tipo) !== -1) {
+    const correcta = (preg.OPCIONES || []).find(function (o) { return o.ES_CORRECTA === true || o.ES_CORRECTA === 'TRUE'; });
+    const elegida = (preg.OPCIONES || []).find(function (o) { return o.ID === respuesta; });
+    return { esCorrecta: !!correcta && !!elegida && correcta.ID === elegida.ID, textoRespuesta: elegida ? elegida.TEXTO : '(sin responder)', textoCorrecta: correcta ? correcta.TEXTO : '' };
+  }
+  if (tipo === 'SELECCION_MULTIPLE_VARIAS') {
+    const correctasIds = (preg.OPCIONES || []).filter(function (o) { return o.ES_CORRECTA === true || o.ES_CORRECTA === 'TRUE'; }).map(function (o) { return o.ID; }).sort();
+    const elegidasIds = (Array.isArray(respuesta) ? respuesta : []).slice().sort();
+    const igual = JSON.stringify(correctasIds) === JSON.stringify(elegidasIds);
+    const textos = function (ids) { return (preg.OPCIONES || []).filter(function (o) { return ids.indexOf(o.ID) !== -1; }).map(function (o) { return o.TEXTO; }).join(', ') || '(sin responder)'; };
+    return { esCorrecta: igual, textoRespuesta: textos(elegidasIds), textoCorrecta: textos(correctasIds) };
+  }
+  if (tipo === 'COMPLETAR' || tipo === 'RESPUESTA_CORTA') {
+    const esp = (preg.RESPUESTA_CORRECTA || '').trim().toLowerCase();
+    const dada = (respuesta || '').trim().toLowerCase();
+    return { esCorrecta: esp !== '' && esp === dada, textoRespuesta: respuesta || '(sin responder)', textoCorrecta: preg.RESPUESTA_CORRECTA || '' };
+  }
+  if (tipo === 'ORDENAR' || tipo === 'ARRASTRAR_SOLTAR') {
+    const normaliza = function (s) { return (s || '').split(/[\n,]/).map(function (x) { return x.trim().toLowerCase(); }).filter(Boolean).join('|'); };
+    const esp = normaliza(preg.RESPUESTA_CORRECTA);
+    const dada = normaliza(respuesta);
+    return { esCorrecta: esp !== '' && esp === dada, textoRespuesta: respuesta || '(sin responder)', textoCorrecta: preg.RESPUESTA_CORRECTA || '' };
+  }
+  // RELACIONAR: el formulario actual del HTML no captura las respuestas de forma estructurada todavía.
+  return { esCorrecta: false, textoRespuesta: '(no evaluado — ver nota en el plan de migración)', textoCorrecta: '' };
+}
+
+window.FirebaseBackend = FirebaseBackend;
 </script>
 </body>
 </html>
