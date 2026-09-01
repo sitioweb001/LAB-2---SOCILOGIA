@@ -209,6 +209,38 @@ table.data-table tr:hover td { background: var(--bg-input); }
 [data-theme="dark"] .hero-card { color: #0f172a; }
 .hero-card h1 { margin-bottom: 10px; }
 .hero-card p { opacity: 0.85; max-width: 600px; }
+
+/* ============================================================
+   LÍNEA DE TIEMPO INTERACTIVA (Módulo 3)
+============================================================ */
+.timeline { position: relative; padding-left: 32px; margin-top: 10px; }
+.timeline::before { content: ''; position: absolute; left: 11px; top: 6px; bottom: 6px; width: 3px; background: var(--border-color); border-radius: 3px; }
+.timeline-item { position: relative; padding-bottom: 26px; cursor: pointer; }
+.timeline-item:last-child { padding-bottom: 0; }
+.timeline-dot { position: absolute; left: -32px; top: 0; width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; box-shadow: 0 0 0 4px var(--bg-card); transition: var(--transition); }
+.timeline-item:hover .timeline-dot, .timeline-item.active .timeline-dot { transform: scale(1.15); background: var(--primary); }
+.timeline-content { background: var(--bg-input); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 14px 18px; transition: var(--transition); }
+.timeline-item:hover .timeline-content, .timeline-item.active .timeline-content { border-color: var(--accent); }
+.timeline-year { display: inline-block; font-weight: 700; font-size: 0.78rem; color: var(--accent); margin-bottom: 4px; }
+.timeline-content h4 { margin-bottom: 4px; }
+.timeline-content p { color: var(--text-secondary); font-size: 0.88rem; margin: 0; }
+
+/* ============================================================
+   ACORDEÓN DE CORRIENTES (Módulo 5)
+============================================================ */
+.accordion-item { border: 1px solid var(--border-color); border-radius: var(--radius-sm); margin-bottom: 10px; overflow: hidden; }
+.accordion-header { width: 100%; text-align: left; padding: 14px 18px; background: var(--bg-input); border: none; font-weight: 700; font-size: 0.95rem; color: var(--text-primary); cursor: pointer; display: flex; align-items: center; gap: 10px; transition: var(--transition); }
+.accordion-header:hover { background: var(--bg-card); }
+.accordion-icon { transition: transform 0.25s ease; font-size: 0.8rem; color: var(--accent); }
+.accordion-item.open .accordion-icon { transform: rotate(90deg); }
+.accordion-body { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; padding: 0 18px; }
+.accordion-item.open .accordion-body { max-height: 400px; padding: 14px 18px 18px; }
+
+/* ============================================================
+   FOOTER
+============================================================ */
+.public-footer { margin-top: 40px; padding: 28px 24px; text-align: center; border-top: 1px solid var(--border-color); color: var(--text-secondary); font-size: 0.85rem; }
+.public-footer p { margin: 2px 0; }
 .container-1200 { max-width: 1200px; margin: 0 auto; padding: 0 24px 48px; }
 
 .week-card, .author-card, .exam-card { display: flex; flex-direction: column; gap: 10px; }
@@ -292,8 +324,12 @@ table.data-table tr:hover td { background: var(--bg-input); }
       <div class="brand"><div class="brand-badge"><i class="fa-solid fa-people-group"></i></div> SOCIOLOGÍA UGB</div>
       <nav class="public-nav" id="public-nav">
         <a data-view="inicio" class="active">Inicio</a>
-        <a data-view="semanas">Semanas</a>
-        <a data-view="autores">Autores</a>
+        <a data-view="modulo1">Módulo 1</a>
+        <a data-view="modulo2">Módulo 2</a>
+        <a data-view="modulo3">Módulo 3</a>
+        <a data-view="modulo4">Módulo 4</a>
+        <a data-view="modulo5">Módulo 5</a>
+        <a data-view="semanas">Material</a>
         <a data-view="examenes">Exámenes</a>
         <a data-view="resultados">Mis resultados</a>
       </nav>
@@ -308,34 +344,168 @@ table.data-table tr:hover td { background: var(--bg-input); }
 
   <section class="hero-section" id="pub-inicio">
     <div class="hero-card fade-in">
-      <h1>Bienvenido a Sociología UGB</h1>
-      <p>Plataforma educativa para el curso de Sociología — Ingeniería en Sistemas y Redes Informáticas.</p>
+      <h1>Sociología UGB — Guía Digital de la Unidad 1</h1>
+      <p>Ciencia, Ciencias Sociales y los Fundamentos de la Sociología. Proyecto de la carrera de Ingeniería en Sistemas y Redes Informáticas, Universidad Gerardo Barrios.</p>
+    </div>
+    <div class="section-card fade-in" style="margin-top:24px;">
+      <div class="section-header"><div><h2>Equipo de desarrollo</h2><p>Estudiantes responsables de este sitio web.</p></div></div>
+      <div class="grid grid-4" id="grid-equipo">
+        <div class="card" style="text-align:center;padding:20px;"><i class="fa-solid fa-user-circle" style="font-size:2.4rem;color:var(--accent);"></i><h4 style="margin-top:10px;">Nombre Apellido</h4><small style="color:var(--text-secondary);">Rol en el proyecto</small></div>
+        <div class="card" style="text-align:center;padding:20px;"><i class="fa-solid fa-user-circle" style="font-size:2.4rem;color:var(--accent);"></i><h4 style="margin-top:10px;">Nombre Apellido</h4><small style="color:var(--text-secondary);">Rol en el proyecto</small></div>
+        <div class="card" style="text-align:center;padding:20px;"><i class="fa-solid fa-user-circle" style="font-size:2.4rem;color:var(--accent);"></i><h4 style="margin-top:10px;">Nombre Apellido</h4><small style="color:var(--text-secondary);">Rol en el proyecto</small></div>
+        <div class="card" style="text-align:center;padding:20px;"><i class="fa-solid fa-user-circle" style="font-size:2.4rem;color:var(--accent);"></i><h4 style="margin-top:10px;">Nombre Apellido</h4><small style="color:var(--text-secondary);">Rol en el proyecto</small></div>
+      </div>
+      <p style="margin-top:16px;color:var(--text-secondary);font-size:0.9rem;">✏️ Reemplaza estos cuatro nombres con los integrantes reales de tu equipo (busca <code>grid-equipo</code> en el HTML).</p>
+    </div>
+    <div class="section-card fade-in">
+      <div class="section-header"><div><h2>Propósito de este sitio</h2></div></div>
+      <p style="line-height:1.7;color:var(--text-secondary);">Este sitio funciona como una guía digital de aprendizaje sobre la Unidad 1 del curso de Sociología. Recorre, en cinco módulos, la delimitación de las ciencias sociales, la definición de la sociología, su desarrollo histórico, sus principales precursores y las corrientes teóricas que la fundamentan — además de un sistema de exámenes interactivo para comprobar lo aprendido.</p>
     </div>
   </section>
 
-  <div class="container-1200">
-    <div class="section-card fade-in" id="pub-semanas">
-      <div class="section-header"><div><h2>Semanas del curso</h2><p>Explora el contenido organizado por semana.</p></div></div>
-      <div class="grid grid-4" id="grid-semanas-pub"><div class="loading"><i class="fa-solid fa-spinner fa-spin"></i> Cargando semanas...</div></div>
-    </div>
+  <main class="container-1200">
 
-    <div class="section-card fade-in" id="pub-autores">
-      <div class="section-header"><div><h2>Autores destacados</h2><p>Sociólogos clave de este curso.</p></div></div>
+    <!-- ============ MÓDULO 1: CIENCIA Y CIENCIAS SOCIALES ============ -->
+    <section class="section-card fade-in" id="pub-modulo1">
+      <div class="section-header"><div><h2>Módulo 1 · Ciencia y Ciencias Sociales</h2><p>Delimitación del conocimiento científico y ubicación de las Ciencias Sociales.</p></div></div>
+      <div class="grid grid-2" style="gap:20px;">
+        <article class="card" style="padding:22px;">
+          <h3 style="margin-bottom:10px;"><i class="fa-solid fa-flask" style="color:var(--accent);"></i> Conocimiento científico vs. sentido común</h3>
+          <p style="line-height:1.7;color:var(--text-secondary);">El <strong>sentido común</strong> es un saber espontáneo, construido a partir de la experiencia cotidiana: se transmite de forma oral, no se verifica sistemáticamente y suele aceptarse sin cuestionarlo. El <strong>conocimiento científico</strong>, en cambio, se produce de forma metódica y sistemática, busca explicar causas, se apoya en evidencia verificable y está abierto a la revisión y la crítica.</p>
+          <ul style="margin-top:12px;line-height:1.8;color:var(--text-secondary);padding-left:20px;">
+            <li>Sistemático: sigue un método, no es azaroso.</li>
+            <li>Verificable: se contrasta con la realidad mediante evidencia.</li>
+            <li>Objetivo: busca minimizar los juicios de valor del investigador.</li>
+            <li>Falible y acumulativo: se corrige y se construye sobre conocimiento previo.</li>
+          </ul>
+        </article>
+        <article class="card" style="padding:22px;">
+          <h3 style="margin-bottom:10px;"><i class="fa-solid fa-diagram-project" style="color:var(--accent);"></i> Clasificación de las ciencias</h3>
+          <p style="line-height:1.7;color:var(--text-secondary);">Las ciencias suelen dividirse en dos grandes grupos:</p>
+          <ul style="margin-top:12px;line-height:1.8;color:var(--text-secondary);padding-left:20px;">
+            <li><strong>Ciencias formales:</strong> estudian entes ideales y sus relaciones (lógica, matemáticas); validan sus proposiciones por coherencia interna.</li>
+            <li><strong>Ciencias fácticas:</strong> estudian hechos del mundo real y validan sus proposiciones contrastándolas con la experiencia. Se dividen en:
+              <ul style="margin-top:6px;padding-left:18px;">
+                <li><em>Ciencias naturales</em> — física, química, biología: estudian los fenómenos de la naturaleza.</li>
+                <li><em>Ciencias sociales</em> — sociología, economía, ciencia política, antropología, psicología: estudian los hechos humanos y sociales.</li>
+              </ul>
+            </li>
+          </ul>
+          <p style="margin-top:12px;line-height:1.7;color:var(--text-secondary);">La <strong>Sociología</strong> se ubica dentro de las ciencias fácticas sociales: su objeto de estudio son las relaciones, estructuras e instituciones que las personas construyen al vivir en sociedad.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- ============ MÓDULO 2: CONCEPTUALIZACIÓN DE LA SOCIOLOGÍA ============ -->
+    <section class="section-card fade-in" id="pub-modulo2">
+      <div class="section-header"><div><h2>Módulo 2 · Conceptualización de la Sociología</h2><p>Definición, objeto de estudio, campo de acción y relación con otras disciplinas.</p></div></div>
+      <div class="grid grid-2" style="gap:20px;">
+        <article class="card" style="padding:22px;">
+          <h3 style="margin-bottom:10px;"><i class="fa-solid fa-book-open" style="color:var(--accent);"></i> Definición y objeto de estudio</h3>
+          <p style="line-height:1.7;color:var(--text-secondary);">La <strong>Sociología</strong> es la ciencia social que estudia la estructura, el funcionamiento y la transformación de las sociedades humanas, así como las relaciones, interacciones e instituciones que las personas construyen al vivir en comunidad. Su objeto de estudio son los <strong>hechos sociales</strong>: formas de actuar, pensar y sentir compartidas por un grupo, que existen más allá de cada individuo y ejercen sobre él cierta influencia.</p>
+        </article>
+        <article class="card" style="padding:22px;">
+          <h3 style="margin-bottom:10px;"><i class="fa-solid fa-briefcase" style="color:var(--accent);"></i> Campo de acción</h3>
+          <p style="line-height:1.7;color:var(--text-secondary);">Quien se forma en Sociología puede trabajar en investigación social, diseño y evaluación de políticas públicas, estudios de mercado y opinión, gestión de proyectos comunitarios, educación, recursos humanos y análisis organizacional, entre otras áreas donde comprender la dinámica social es clave.</p>
+        </article>
+      </div>
+      <article class="card" style="padding:22px;margin-top:20px;">
+        <h3 style="margin-bottom:10px;"><i class="fa-solid fa-diagram-project" style="color:var(--accent);"></i> Relación con otras disciplinas sociales</h3>
+        <div class="grid grid-4">
+          <div><strong>Antropología</strong><p style="color:var(--text-secondary);font-size:0.9rem;">Estudia la cultura y la diversidad humana; la sociología se enfoca más en las sociedades modernas e industrializadas.</p></div>
+          <div><strong>Psicología</strong><p style="color:var(--text-secondary);font-size:0.9rem;">Estudia la mente y el comportamiento individual; la sociología estudia el comportamiento en tanto fenómeno colectivo.</p></div>
+          <div><strong>Ciencia Política</strong><p style="color:var(--text-secondary);font-size:0.9rem;">Estudia el poder, el Estado y los sistemas de gobierno como parte de la organización social.</p></div>
+          <div><strong>Economía</strong><p style="color:var(--text-secondary);font-size:0.9rem;">Estudia la producción y distribución de recursos; la sociología analiza su impacto en la estructura social.</p></div>
+        </div>
+      </article>
+    </section>
+
+    <!-- ============ MÓDULO 3: DESARROLLO HISTÓRICO (LÍNEA DE TIEMPO INTERACTIVA) ============ -->
+    <section class="section-card fade-in" id="pub-modulo3">
+      <div class="section-header"><div><h2>Módulo 3 · Desarrollo Histórico de la Sociología</h2><p>Contexto sociohistórico de su surgimiento. Haz clic en cada hito para ver más detalle.</p></div></div>
+      <div class="timeline" id="linea-tiempo">
+        <div class="timeline-item" data-detalle="El pensamiento racionalista del siglo XVIII cuestionó la tradición y la autoridad religiosa, promoviendo la razón, la ciencia y la idea de progreso social. Pensadores como Voltaire, Rousseau y Montesquieu sentaron las bases intelectuales para pensar la sociedad de forma crítica.">
+          <div class="timeline-dot"><i class="fa-solid fa-lightbulb"></i></div>
+          <div class="timeline-content"><span class="timeline-year">S. XVIII</span><h4>La Ilustración</h4><p>Razón, crítica a la tradición e idea de progreso.</p></div>
+        </div>
+        <div class="timeline-item" data-detalle="En 1789 el pueblo francés derrocó al Antiguo Régimen bajo las ideas de libertad, igualdad y fraternidad. Mostró que el orden social no era algo fijo ni natural, sino que podía transformarse — una idea central para el pensamiento sociológico posterior.">
+          <div class="timeline-dot"><i class="fa-solid fa-flag"></i></div>
+          <div class="timeline-content"><span class="timeline-year">1789</span><h4>Revolución Francesa</h4><p>Ruptura del antiguo orden social y político.</p></div>
+        </div>
+        <div class="timeline-item" data-detalle="La industrialización transformó radicalmente la vida social: surgieron nuevas clases (burguesía industrial y proletariado), creció la urbanización y aparecieron problemas sociales inéditos como la pobreza urbana y las condiciones laborales extremas — fenómenos que exigían ser estudiados científicamente.">
+          <div class="timeline-dot"><i class="fa-solid fa-industry"></i></div>
+          <div class="timeline-content"><span class="timeline-year">Finales S. XVIII - XIX</span><h4>Revolución Industrial</h4><p>Nuevas clases sociales, urbanización y problemas sociales.</p></div>
+        </div>
+        <div class="timeline-item" data-detalle="Auguste Comte utilizó por primera vez el término 'sociología' en su obra 'Curso de filosofía positiva', proponiendo estudiar la sociedad con los mismos métodos rigurosos de las ciencias naturales.">
+          <div class="timeline-dot"><i class="fa-solid fa-book"></i></div>
+          <div class="timeline-content"><span class="timeline-year">1838</span><h4>Nace el término "Sociología"</h4><p>Auguste Comte acuña el nombre de la disciplina.</p></div>
+        </div>
+        <div class="timeline-item" data-detalle="Émile Durkheim ocupó en 1895 la primera cátedra universitaria de Sociología en Burdeos, Francia, consolidando la disciplina como campo académico independiente, con su propio método y objeto de estudio.">
+          <div class="timeline-dot"><i class="fa-solid fa-graduation-cap"></i></div>
+          <div class="timeline-content"><span class="timeline-year">1895</span><h4>Consolidación académica</h4><p>Durkheim funda la primera cátedra de Sociología.</p></div>
+        </div>
+      </div>
+      <div id="linea-tiempo-detalle" class="card" style="margin-top:18px;padding:18px;display:none;"></div>
+    </section>
+
+    <!-- ============ MÓDULO 4: PRECURSORES Y EXPONENTES ============ -->
+    <section class="section-card fade-in" id="pub-modulo4">
+      <div class="section-header"><div><h2>Módulo 4 · Precursores y Exponentes</h2><p>Perfiles de los pensadores clave de la Sociología. Este contenido lo administra el docente desde el panel.</p></div></div>
       <div class="grid grid-4" id="grid-autores-pub"><div class="loading"><i class="fa-solid fa-spinner fa-spin"></i> Cargando autores...</div></div>
-    </div>
+    </section>
 
-    <div class="section-card fade-in" id="pub-examenes">
-      <div class="section-header"><div><h2>Exámenes disponibles</h2><p>Pon a prueba lo aprendido.</p></div></div>
+    <!-- ============ MÓDULO 5: CORRIENTES Y TEORÍAS (ACORDEÓN) ============ -->
+    <section class="section-card fade-in" id="pub-modulo5">
+      <div class="section-header"><div><h2>Módulo 5 · Principales Corrientes y Teorías Sociológicas</h2><p>Haz clic en cada corriente para desplegar su explicación.</p></div></div>
+      <div class="accordion" id="acordeon-corrientes">
+        <div class="accordion-item">
+          <button class="accordion-header" onclick="toggleAcordeon(this)"><i class="fa-solid fa-chevron-right accordion-icon"></i> Positivismo</button>
+          <div class="accordion-body"><p style="line-height:1.7;color:var(--text-secondary);">Impulsado por <strong>Auguste Comte</strong>, propone estudiar la sociedad con los mismos métodos rigurosos de las ciencias naturales: observación, comparación y verificación empírica, dejando de lado la especulación metafísica. Busca leyes generales que expliquen el orden y el progreso social.</p></div>
+        </div>
+        <div class="accordion-item">
+          <button class="accordion-header" onclick="toggleAcordeon(this)"><i class="fa-solid fa-chevron-right accordion-icon"></i> Materialismo Histórico</button>
+          <div class="accordion-body"><p style="line-height:1.7;color:var(--text-secondary);">Desarrollado por <strong>Karl Marx</strong>, sostiene que la estructura económica de una sociedad (los modos de producción) determina en gran medida sus instituciones, ideas y cultura. Explica el cambio social a partir del conflicto entre clases sociales con intereses opuestos.</p></div>
+        </div>
+        <div class="accordion-item">
+          <button class="accordion-header" onclick="toggleAcordeon(this)"><i class="fa-solid fa-chevron-right accordion-icon"></i> Estructural Funcionalismo</button>
+          <div class="accordion-body"><p style="line-height:1.7;color:var(--text-secondary);">Con raíces en <strong>Durkheim</strong> y desarrollado luego por autores como Talcott Parsons, concibe la sociedad como un sistema compuesto por partes interdependientes (familia, educación, economía, religión) que cumplen funciones específicas para mantener el equilibrio y la cohesión del conjunto.</p></div>
+        </div>
+        <div class="accordion-item">
+          <button class="accordion-header" onclick="toggleAcordeon(this)"><i class="fa-solid fa-chevron-right accordion-icon"></i> Teoría Crítica</button>
+          <div class="accordion-body"><p style="line-height:1.7;color:var(--text-secondary);">Surgida en la Escuela de Fráncfort (Horkheimer, Adorno, y luego Habermas), cuestiona las formas de dominación social, económica e ideológica presentes en la sociedad moderna, y busca un conocimiento que no solo describa la realidad, sino que contribuya a transformarla.</p></div>
+        </div>
+        <div class="accordion-item">
+          <button class="accordion-header" onclick="toggleAcordeon(this)"><i class="fa-solid fa-chevron-right accordion-icon"></i> Sociología Comprensiva (acción social)</button>
+          <div class="accordion-body"><p style="line-height:1.7;color:var(--text-secondary);">Propuesta por <strong>Max Weber</strong>, plantea que para comprender la sociedad hay que interpretar el sentido subjetivo que las personas dan a sus acciones. Introduce el "tipo ideal" como herramienta metodológica para comparar fenómenos sociales complejos.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-card fade-in" id="pub-semanas">
+      <div class="section-header"><div><h2>Material semanal</h2><p>Contenido complementario organizado por semana, administrado por el docente.</p></div></div>
+      <div class="grid grid-4" id="grid-semanas-pub"><div class="loading"><i class="fa-solid fa-spinner fa-spin"></i> Cargando semanas...</div></div>
+    </section>
+
+    <section class="section-card fade-in" id="pub-examenes">
+      <div class="section-header"><div><h2>Exámenes disponibles</h2><p>Pon a prueba lo aprendido en los 5 módulos.</p></div></div>
       <div class="grid grid-3" id="grid-examenes-pub"><div class="loading"><i class="fa-solid fa-spinner fa-spin"></i> Cargando exámenes...</div></div>
-    </div>
+    </section>
 
-    <div class="section-card fade-in" id="pub-resultados">
+    <section class="section-card fade-in" id="pub-resultados">
       <div class="section-header"><div><h2>Mis resultados</h2><p id="resultados-sub">Identifícate para ver tu historial de exámenes.</p></div>
         <button class="btn btn-secondary btn-sm" id="btn-identificarse" onclick="openModal('modal-estudiante-id')"><i class="fa-solid fa-user"></i> Identificarme</button>
       </div>
       <div class="table-wrap"><table class="data-table"><thead><tr><th>Examen</th><th>Puntuación</th><th>Correctas</th><th>Fecha</th><th>Detalle</th></tr></thead><tbody id="tbody-mis-resultados"><tr><td colspan="5" class="empty-state">Identifícate para ver tus resultados.</td></tr></tbody></table></div>
+    </section>
+
+  </main>
+
+  <footer class="public-footer">
+    <div class="container-1200">
+      <p>Universidad Gerardo Barrios (UGB) — Ingeniería en Sistemas y Redes Informáticas.</p>
+      <p>Proyecto académico · Unidad 1: Ciencia, Ciencias Sociales y Fundamentos de la Sociología · <span id="footer-anio"></span></p>
     </div>
-  </div>
+  </footer>
 </div>
 
 <!-- ============================================================
@@ -1987,11 +2157,42 @@ async function enviarIntento() {
 window.addEventListener('DOMContentLoaded', function () {
   initTheme();
   cargarVistaPublica();
+  initModulo3Timeline();
+  const footerAnio = document.getElementById('footer-anio');
+  if (footerAnio) footerAnio.textContent = new Date().getFullYear();
   const savedStudent = localStorage.getItem('ugb_estudiante');
   if (savedStudent) { state.estudiante = JSON.parse(savedStudent); cargarMisResultados(); }
   const savedTeacher = sessionStorage.getItem('ugb_docente');
   if (savedTeacher) { state.docente = JSON.parse(savedTeacher); entrarPanelDocente(); }
 });
+
+/* ============================================================
+   MÓDULO 5 — ACORDEÓN DE CORRIENTES SOCIOLÓGICAS
+============================================================ */
+function toggleAcordeon(btn) {
+  const item = btn.closest('.accordion-item');
+  const yaAbierto = item.classList.contains('open');
+  document.querySelectorAll('#acordeon-corrientes .accordion-item').forEach(function (i) { i.classList.remove('open'); });
+  if (!yaAbierto) item.classList.add('open');
+}
+
+/* ============================================================
+   MÓDULO 3 — LÍNEA DE TIEMPO INTERACTIVA
+============================================================ */
+function initModulo3Timeline() {
+  const timeline = document.getElementById('linea-tiempo');
+  if (!timeline) return;
+  const detalleBox = document.getElementById('linea-tiempo-detalle');
+  timeline.addEventListener('click', function (e) {
+    const item = e.target.closest('.timeline-item');
+    if (!item) return;
+    document.querySelectorAll('#linea-tiempo .timeline-item').forEach(function (i) { i.classList.remove('active'); });
+    item.classList.add('active');
+    const titulo = item.querySelector('h4') ? item.querySelector('h4').textContent : '';
+    detalleBox.innerHTML = '<h4 style="margin-bottom:8px;color:var(--accent);">' + titulo + '</h4><p style="line-height:1.7;color:var(--text-secondary);">' + item.dataset.detalle + '</p>';
+    detalleBox.style.display = 'block';
+  });
+}
 </script>
 
 <!-- ================================================================
