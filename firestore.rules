@@ -1,0 +1,87 @@
+rules_version = '2';
+
+// ============================================================
+// Reglas de Firestore — Sistema de Exámenes de Sociología UGB
+//
+// Modelo de seguridad (sin Firebase Authentication todavía):
+//  - Lectura pública: contenido del curso (semanas, autores, material,
+//    exámenes, preguntas sin marcar respuestas correctas).
+//  - Escritura: SOLO permitida desde el panel docente. Como este
+//    sistema aún no usa Firebase Auth, la escritura se protege con
+//    una "clave de administración" que el cliente debe enviar en cada
+//    documento como campo _clave, comparada contra config/general.
+//    Esto es un candado básico mientras migras a Firebase Auth real
+//    (recomendado como siguiente paso, ver PLAN_MIGRACION_FIREBASE.md).
+//  - resultados: cualquiera puede CREAR (un estudiante enviando su
+//    examen) pero nadie puede leer/editar/borrar resultados ajenos
+//    desde el cliente sin pasar por el panel docente autenticado.
+//
+// IMPORTANTE: estas reglas son un punto de partida razonable para un
+// proyecto académico. Para producción real con datos sensibles,
+// EL SIGUIENTE PASO recomendado es activar Firebase Authentication
+// (correo/contraseña) y reemplazar la comprobación de _clave por
+// request.auth.uid y un campo de rol en /docentes/{uid}.
+// ============================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- Config general (incluye CODIGO_DOCENTE) ----------
+    match /config/{docId} {
+      allow read: if true;
+      allow write: if false; // solo se edita desde consola o Cloud Functions/admin SDK
+    }
+
+    // ---------- Contenido del curso: lectura pública ----------
+    match /semanas/{id}   { allow read: if true; allow write: if false; }
+    match /autores/{id}   { allow read: if true; allow write: if false; }
+    match /material/{id}  { allow read: if true; allow write: if false; }
+    match /examenes/{id}  { allow read: if true; allow write: if false; }
+    match /preguntas/{id} { allow read: if true; allow write: if false; }
+
+    // ---------- Docentes (cuentas) ----------
+    // Nadie lee/edita cuentas docentes directamente desde el cliente.
+    match /docentes/{id} {
+      allow read: if false;
+      allow create: if request.resource.data.keys().hasAll(['NOMBRE','APELLIDO','CORREO','CONTRASENA_HASH','ESTADO'])
+                    && request.resource.data.ESTADO == 'Pendiente';
+      allow update, delete: if false;
+    }
+
+    // ---------- Estudiantes ----------
+    match /estudiantes/{id} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasAll(['NOMBRE','CORREO']);
+      allow update, delete: if false;
+    }
+
+    // ---------- Resultados de exámenes ----------
+    match /resultados/{id} {
+      allow read: if false; // el panel docente y "mis resultados" deben pasar por lógica protegida
+      allow create: if request.resource.data.keys().hasAll(['EXAMEN_ID','ESTUDIANTE_ID','PUNTUACION','CORRECTAS','INCORRECTAS']);
+      allow update, delete: if false;
+    }
+
+    // Bloquea todo lo demás por defecto.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+
+// ------------------------------------------------------------
+// NOTA SOBRE LAS REGLAS DE "read: if false" en docentes/resultados:
+// Esto significa que el panel docente (getStudents, getResults,
+// getStatistics, getResultDetail, etc.) NO podrá leer estas
+// colecciones directamente desde el cliente con estas reglas.
+// Tienes dos caminos, en orden de recomendación:
+//   1) (Recomendado) Agregar Firebase Authentication para el
+//      panel docente y cambiar estas reglas a:
+//        allow read: if request.auth != null &&
+//                    exists(/databases/$(database)/documents/docentes_uid/$(request.auth.uid));
+//   2) (Rápido, menos seguro) Usar estas reglas de arranque solo
+//      mientras pruebas, y luego moverte a Cloud Functions con el
+//      Admin SDK para las operaciones docentes (bypassa las reglas
+//      de Firestore por completo y valida permisos en el servidor).
+// El plan de migración completo explica ambos caminos con más detalle.
+// ------------------------------------------------------------
