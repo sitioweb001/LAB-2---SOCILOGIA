@@ -779,6 +779,16 @@ table.data-table tr:hover td { background: var(--bg-input); }
             </div>
             <p style="color:var(--text-secondary);font-size:0.82rem;margin-top:10px;">"Limpiar duplicados" busca semanas, autores, material, preguntas, exámenes y estudiantes repetidos (por número, nombre, título o correo) y elimina las copias, conservando siempre la versión más completa de cada uno. Los exámenes, el material y los resultados que apuntaban a un registro eliminado se actualizan automáticamente para no quedar rotos.</p>
             <div id="limpiar-duplicados-result" style="margin-top:12px;"></div>
+
+            <hr style="border:none;border-top:1px solid var(--border-color);margin:20px 0;">
+
+            <h3 style="margin-bottom:6px;">👥 Solicitudes de cuenta docente</h3>
+            <p style="color:var(--text-secondary);font-size:0.88rem;margin-bottom:16px;">Aprueba de una sola vez todas las solicitudes de cuenta docente que estén pendientes en este momento (equivale a aprobarlas una por una desde la sección "Docentes").</p>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;">
+              <button class="btn btn-accent" id="btn-aprobar-todos-docentes" onclick="aprobarTodosDocentesPendientes()"><i class="fa-solid fa-user-check"></i> Aceptar todas las solicitudes docentes</button>
+              <a class="btn btn-secondary" href="README.md" target="_blank" rel="noopener"><i class="fa-solid fa-book"></i> Manual de usuario</a>
+            </div>
+            <div id="aprobar-docentes-result" style="margin-top:12px;"></div>
           </div>
         </section>
 
@@ -1151,7 +1161,8 @@ const LOADING_MESSAGES = {
   submitAttempt: 'Calificando tu examen...', getResultDetail: 'Cargando detalle del resultado...',
   initDatabase: 'Sincronizando base de datos...', createQuestion: 'Guardando pregunta...', updateQuestion: 'Actualizando pregunta...',
   createExam: 'Creando examen...', updateExam: 'Actualizando examen...', limpiarDuplicados: 'Buscando y limpiando duplicados...',
-  getTeachers: 'Cargando docentes...', updateTeacherStatus: 'Actualizando cuenta docente...', deleteTeacher: 'Eliminando cuenta docente...'
+  getTeachers: 'Cargando docentes...', updateTeacherStatus: 'Actualizando cuenta docente...', deleteTeacher: 'Eliminando cuenta docente...',
+  aprobarTodosDocentes: 'Aprobando solicitudes docentes...'
 };
 function mostrarCarga(action) {
   const esLlamadaExterna = loadingDepth === 0; // solo la primera llamada de una cadena fija el texto
@@ -1692,6 +1703,28 @@ async function renderTeachersTable() {
 async function aprobarDocente(id) { await api('updateTeacherStatus', { id: id, estado: 'Activo' }); await renderTeachersTable(); alertaFlotante('Cuenta docente aprobada.'); }
 async function rechazarDocente(id) { await api('updateTeacherStatus', { id: id, estado: 'Denegado' }); await renderTeachersTable(); alertaFlotante('Cuenta docente rechazada.'); }
 async function eliminarDocente(id) { await api('deleteTeacher', { id: id }); await renderTeachersTable(); alertaFlotante('Cuenta docente eliminada.'); }
+
+async function aprobarTodosDocentesPendientes() {
+  if (!confirm('Esto aprobará automáticamente TODAS las solicitudes de cuenta docente que estén pendientes en este momento. ¿Deseas continuar?')) return;
+  const btn = document.getElementById('btn-aprobar-todos-docentes');
+  const original = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Aprobando...';
+  document.getElementById('aprobar-docentes-result').innerHTML = '';
+  try {
+    const res = await api('aprobarTodosDocentes');
+    const mensaje = res.aprobados > 0 ? ('Se aprobaron ' + res.aprobados + ' cuenta(s) docente pendiente(s).') : 'No había ninguna solicitud pendiente.';
+    document.getElementById('aprobar-docentes-result').innerHTML = '<div class="alert alert-success"><i class="fa-solid fa-user-check"></i><span>' + mensaje + '</span></div>';
+    alertaFlotante(mensaje);
+  } catch (err) {
+    console.error(err);
+    document.getElementById('aprobar-docentes-result').innerHTML = '<div class="alert alert-danger"><i class="fa-solid fa-circle-exclamation"></i><span>No fue posible aprobar las solicitudes. Intenta nuevamente.</span></div>';
+    alertaFlotante('No fue posible aprobar las solicitudes.', 'danger');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = original;
+  }
+}
 
 /* ============================================================
    SEMANAS — CRUD
@@ -2599,6 +2632,13 @@ async function initDatabase() {
     if (Object.keys(faltantes).length) { await updateDoc(cfgRef, faltantes); detalle.push('Campos agregados a config/general: ' + Object.keys(faltantes).join(', ')); }
     else detalle.push('config/general ya estaba completo.');
   }
+  // Cuenta docente por defecto: solo se crea la primera vez, si la colección "docentes" está completamente vacía.
+  const docentesSnap = await getDocs(collection(db, 'docentes'));
+  if (docentesSnap.empty) {
+    const hashAdmin = await hashPass('ADMIN');
+    await addDoc(collection(db, 'docentes'), { NOMBRE: 'Administrador', APELLIDO: '', CORREO: 'ADMIN', CONTRASENA_HASH: hashAdmin, ESTADO: 'Activo' });
+    detalle.push('Cuenta docente por defecto creada — usuario: ADMIN · contraseña: ADMIN. Cámbiala cuanto antes desde el panel.');
+  }
   const colecciones = ['docentes', 'estudiantes', 'semanas', 'material', 'autores', 'preguntas', 'examenes', 'resultados'];
   for (const c of colecciones) {
     const s = await getDocs(collection(db, c));
@@ -2774,6 +2814,12 @@ const FirebaseBackend = {
       }
       case 'updateTeacherStatus': { await updateDoc(doc(db, 'docentes', p.id), { ESTADO: p.estado }); return ok({}); }
       case 'deleteTeacher': await deleteDoc(doc(db, 'docentes', p.id)); return ok({});
+      case 'aprobarTodosDocentes': {
+        const lista = await todos('docentes');
+        const pendientes = lista.filter(function (d) { return d.ESTADO === 'Pendiente'; });
+        for (const d of pendientes) { await updateDoc(doc(db, 'docentes', d.ID), { ESTADO: 'Activo' }); }
+        return ok({ aprobados: pendientes.length });
+      }
 
       /* ---------- ESTUDIANTE ---------- */
       case 'loginStudent': {
