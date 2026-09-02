@@ -372,7 +372,7 @@ table.data-table tr:hover td { background: var(--bg-input); }
             <a data-view="resultados"><i class="fa-solid fa-chart-simple"></i> Mis resultados</a>
           </div>
         </div>
-        <button class="btn btn-secondary btn-sm" onclick="pedirClaveAreaDocente()"><i class="fa-solid fa-key"></i> Área docente</button>
+        <button class="btn btn-secondary btn-sm" id="btn-area-docente" onclick="manejarClicAreaDocente(event)" title="Clic normal: iniciar sesión. Ctrl + clic: activar vista ADMIN sin salir de la vista de estudiante."><i class="fa-solid fa-key"></i> <span id="btn-area-docente-texto">Área docente</span></button>
       </div>
     </div>
   </header>
@@ -1393,6 +1393,8 @@ function doLogout() {
   closeModal('modal-confirmar-logout');
   document.getElementById('panel-docente').style.display = 'none';
   document.getElementById('vista-estudiante').style.display = 'block';
+  const btnTexto = document.getElementById('btn-area-docente-texto');
+  if (btnTexto) btnTexto.textContent = 'Área docente';
 }
 
 async function entrarPanelDocente() {
@@ -2271,6 +2273,40 @@ async function verificarClaveRespuestas() {
 /* ============================================================
    ACCESO PROTEGIDO AL ÁREA DOCENTE (código rápido: 747)
 ============================================================ */
+async function manejarClicAreaDocente(event) {
+  // Ctrl/Cmd + clic: activa una "Vista ADMIN" en memoria, sin abrir ningún
+  // modal ni salir de la vista de estudiante. Es solo un atajo rápido para
+  // el propio docente durante pruebas/demostraciones — no reemplaza el
+  // inicio de sesión real (código 747 + correo/contraseña).
+  if (event.ctrlKey || event.metaKey) {
+    event.preventDefault();
+    await activarVistaAdmin();
+    return;
+  }
+  // Clic normal: si ya está en "Vista ADMIN" (o ya había una sesión activa),
+  // entra directo al panel sin pedir el código ni el login otra vez.
+  if (state.docente) {
+    entrarPanelDocente();
+    return;
+  }
+  pedirClaveAreaDocente();
+}
+async function activarVistaAdmin() {
+  try {
+    const res = await api('getTeachers');
+    const admin = (res.data || []).find(function (d) { return (d.CORREO || '').toUpperCase() === 'ADMIN'; });
+    if (!admin) {
+      alertaFlotante('No existe la cuenta ADMIN todavía. Entra al área docente e inicializa la base de datos primero.', 'danger');
+      return;
+    }
+    state.docente = admin; // solo en memoria: no se guarda en sessionStorage, así que se olvida al recargar la página.
+    document.getElementById('btn-area-docente-texto').textContent = 'Vista ADMIN';
+    alertaFlotante('Vista ADMIN activada. Sigues viendo el sitio como estudiante — vuelve a hacer clic (normal) en el botón para entrar al panel.', 'success');
+  } catch (err) {
+    console.error(err);
+    alertaFlotante('No se pudo activar la Vista ADMIN.', 'danger');
+  }
+}
 function pedirClaveAreaDocente() {
   document.getElementById('clave-panel-docente-input').value = '';
   document.getElementById('clave-panel-docente-error').innerHTML = '';
