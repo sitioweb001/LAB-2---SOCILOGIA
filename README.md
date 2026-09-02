@@ -82,6 +82,18 @@ El acceso está protegido en **dos pasos**:
 
 Si un docente nuevo se registra con **"Crear cuenta"**, además debe ingresar el **"Código de acceso docente"** (uno distinto, generado automáticamente y visible/regenerable en `Configuración → Base de datos`). Su cuenta queda en estado **Pendiente** hasta que alguien con acceso al panel la apruebe (ver [sección 7](#7--aprobar-cuentas-estudiantes-y-docentes)).
 
+### ⚡ Atajo "Vista ADMIN" (Ctrl/Cmd + clic)
+
+El botón **"Área docente"** tiene un atajo pensado para uso propio del docente durante pruebas o demostraciones:
+
+| Acción sobre el botón | Qué pasa |
+|---|---|
+| **Ctrl + clic** (o **Cmd + clic** en Mac) | No abre ningún modal. Activa en segundo plano una **"Vista ADMIN"**: el botón cambia su texto a *"Vista ADMIN"* y sigues viendo el sitio exactamente como lo vería un estudiante. |
+| **Clic normal**, después de activar la Vista ADMIN | Entra **directo** al panel docente como `ADMIN`, sin pedir el código `747` ni el login. |
+| **Clic normal**, sin haber activado la Vista ADMIN | Flujo normal: pide el código `747` y luego el login/registro. |
+
+> 🚨 **Ojo con esto:** este atajo entra como la cuenta `ADMIN` **sin pedir ninguna contraseña**. Es una comodidad para ti mismo mientras desarrollas/pruebas el sitio, pero cualquier persona que abra el código fuente del sitio (es público, como todo sitio web) puede descubrir este atajo y usarlo para entrar como administrador sin saber ninguna contraseña. La Vista ADMIN **no se guarda** al recargar la página (se olvida sola), pero mientras la pestaña siga abierta, sigue activa. Si vas a publicar el sitio para uso real, considera quitar este atajo o protegerlo mejor.
+
 ---
 
 ## 5. 👤 Cuenta de administrador por defecto
@@ -184,6 +196,7 @@ El banco de preguntas admite 10 tipos distintos:
 ## 11. 🔒 Seguridad — leer antes de usar en producción
 
 - El panel docente **no usa Firebase Authentication todavía**: la protección es solo el código `747` + el login por contraseña dentro de la interfaz. Quien tenga acceso directo a la configuración de Firebase del sitio (visible en el propio código fuente) podría, en teoría, escribir directamente en la base de datos sin pasar por esa contraseña.
+- El atajo **Ctrl/Cmd + clic → "Vista ADMIN"** (ver [sección 4](#4--cómo-entrar-al-área-docente)) entra como `ADMIN` sin pedir contraseña. Es cómodo para ti, pero es un punto de entrada adicional que cualquiera que revise el código fuente puede encontrar y usar.
 - Por eso es fundamental:
   - Cambiar la contraseña de la cuenta `ADMIN` apenas se configure el sitio.
   - No compartir el código `747` ni el "Código de acceso docente" fuera del equipo docente.
