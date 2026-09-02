@@ -575,6 +575,7 @@ table.data-table tr:hover td { background: var(--bg-input); }
         <a data-section="examenes"><i class="fa-solid fa-file-lines"></i> Exámenes</a>
         <a data-section="resultados"><i class="fa-solid fa-chart-simple"></i> Resultados</a>
         <a data-section="estadisticas"><i class="fa-solid fa-chart-pie"></i> Estadísticas</a>
+        <a data-section="docentes"><i class="fa-solid fa-chalkboard-user"></i> Docentes</a>
         <a data-section="configuracion"><i class="fa-solid fa-gear"></i> Configuración</a>
       </nav>
       <div class="sidebar-divider"></div>
@@ -723,6 +724,17 @@ table.data-table tr:hover td { background: var(--bg-input); }
               <div class="section-header"><h2>📊 Distribución de resultados</h2></div>
               <div id="lista-distribucion"></div>
             </div>
+          </div>
+        </section>
+
+        <!-- DOCENTES -->
+        <section class="admin-section" id="sec-docentes">
+          <div class="section-card">
+            <div class="section-header">
+              <div><h2>Docentes</h2><p>Aprueba, rechaza o elimina cuentas de acceso al panel docente.</p></div>
+            </div>
+            <div id="aviso-docentes-pendientes" class="alert alert-warning" style="display:none;margin-bottom:14px;"></div>
+            <div class="table-wrap"><table class="data-table"><thead><tr><th>Nombre</th><th>Correo</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="tbody-docentes"></tbody></table></div>
           </div>
         </section>
 
@@ -1121,7 +1133,7 @@ const FIREBASE_CONFIG = window.FIREBASE_CONFIG; // alias local para el resto de 
 const state = {
   docente: null,
   estudiante: null,
-  semanas: [], autores: [], material: [], estudiantes: [], preguntas: [], examenes: [], resultados: [],
+  semanas: [], autores: [], material: [], estudiantes: [], preguntas: [], examenes: [], resultados: [], docentes: [],
   constructorExamenId: null, constructorSeleccion: [],
   intentoActual: null, resultadoActualId: null,
   eliminarCallback: null
@@ -1138,7 +1150,8 @@ const LOADING_MESSAGES = {
   getResults: 'Cargando resultados...', getStatistics: 'Calculando estadísticas...', getExamForStudent: 'Preparando examen...',
   submitAttempt: 'Calificando tu examen...', getResultDetail: 'Cargando detalle del resultado...',
   initDatabase: 'Sincronizando base de datos...', createQuestion: 'Guardando pregunta...', updateQuestion: 'Actualizando pregunta...',
-  createExam: 'Creando examen...', updateExam: 'Actualizando examen...', limpiarDuplicados: 'Buscando y limpiando duplicados...'
+  createExam: 'Creando examen...', updateExam: 'Actualizando examen...', limpiarDuplicados: 'Buscando y limpiando duplicados...',
+  getTeachers: 'Cargando docentes...', updateTeacherStatus: 'Actualizando cuenta docente...', deleteTeacher: 'Eliminando cuenta docente...'
 };
 function mostrarCarga(action) {
   const esLlamadaExterna = loadingDepth === 0; // solo la primera llamada de una cadena fija el texto
@@ -1514,7 +1527,7 @@ function mostrarSeccion(nombre) {
   document.querySelectorAll('.sidebar-nav a').forEach(function (a) { a.classList.toggle('active', a.dataset.section === nombre); });
   document.querySelectorAll('.admin-section').forEach(function (s) { s.classList.remove('active'); });
   document.getElementById('sec-' + nombre).classList.add('active');
-  const titles = { dashboard: 'Dashboard', estudiantes: 'Estudiantes', semanas: 'Semanas', material: 'Material educativo', autores: 'Autores', preguntas: 'Banco de preguntas', examenes: 'Exámenes', resultados: 'Resultados', estadisticas: 'Estadísticas', configuracion: 'Configuración' };
+  const titles = { dashboard: 'Dashboard', estudiantes: 'Estudiantes', semanas: 'Semanas', material: 'Material educativo', autores: 'Autores', preguntas: 'Banco de preguntas', examenes: 'Exámenes', resultados: 'Resultados', estadisticas: 'Estadísticas', docentes: 'Docentes', configuracion: 'Configuración' };
   document.getElementById('admin-section-title').textContent = titles[nombre];
   toggleSidebar(false);
   renderSeccion(nombre);
@@ -1534,6 +1547,7 @@ function renderSeccion(nombre) {
   if (nombre === 'examenes') renderExamsTable();
   if (nombre === 'resultados') renderResultsTable();
   if (nombre === 'estadisticas') renderStatistics();
+  if (nombre === 'docentes') renderTeachersTable();
   if (nombre === 'configuracion') renderConfig();
 }
 
@@ -1562,9 +1576,10 @@ async function renderDashboard() {
   const stats = await api('getStatistics');
   const s = stats;
   const cards = [
-    ['fa-user-graduate', 'success', s.totalEstudiantes, 'Total estudiantes'],
-    ['fa-user-check', 'info', s.estudiantesActivos, 'Estudiantes activos'],
-    ['fa-user-clock', 'warning', s.estudiantesPendientes || 0, 'Pendientes de aprobar'],
+    ['fa-user-graduate', 'success', s.totalEstudiantes, 'Total estudiantes', 'estudiantes'],
+    ['fa-user-check', 'info', s.estudiantesActivos, 'Estudiantes activos', 'estudiantes'],
+    ['fa-user-clock', 'warning', s.estudiantesPendientes || 0, 'Estudiantes pendientes de aprobar', 'estudiantes'],
+    ['fa-chalkboard-user', 'warning', s.docentesPendientes || 0, 'Docentes pendientes de aprobar', 'docentes'],
     ['fa-circle-question', 'warning', s.totalPreguntas, 'Preguntas'],
     ['fa-file-lines', 'danger', s.totalExamenes, 'Exámenes'],
     ['fa-list-check', 'info', s.examenesRealizados, 'Exámenes realizados'],
@@ -1581,7 +1596,8 @@ async function renderDashboard() {
   document.getElementById('dash-bar-chart').innerHTML = barChart(s.promedioPorSemana.map(function (x) { return { label: 'Sem ' + x.semana, value: x.promedio }; }));
 }
 function statCard(c) {
-  return '<div class="card stat-card"><div class="stat-icon badge-' + c[1] + '"><i class="fa-solid ' + c[0] + '"></i></div><div class="stat-value">' + c[2] + '</div><div class="stat-label">' + c[3] + '</div></div>';
+  const clic = c[4] ? ' onclick="mostrarSeccion(\'' + c[4] + '\')" style="cursor:pointer;"' : '';
+  return '<div class="card stat-card"' + clic + '><div class="stat-icon badge-' + c[1] + '"><i class="fa-solid ' + c[0] + '"></i></div><div class="stat-value">' + c[2] + '</div><div class="stat-label">' + c[3] + '</div></div>';
 }
 function barChart(items) {
   const max = Math.max.apply(null, items.map(function (i) { return i.value; }).concat([1]));
@@ -1641,6 +1657,41 @@ function renderStudentsTable() {
 }
 async function aprobarEstudiante(id) { await api('updateStudent', { id: id, data: { ESTADO: 'Activo' } }); await cargarTodo(); renderStudentsTable(); alertaFlotante('Estudiante aprobado.'); }
 async function eliminarEstudiante(id) { await api('deleteStudent', { id: id }); await cargarTodo(); renderStudentsTable(); alertaFlotante('Estudiante eliminado.'); }
+
+/* ============================================================
+   DOCENTES — APROBACIÓN Y GESTIÓN DE CUENTAS
+============================================================ */
+async function renderTeachersTable() {
+  const res = await api('getTeachers');
+  state.docentes = res.data;
+  const pendientes = state.docentes.filter(function (d) { return d.ESTADO === 'Pendiente'; }).length;
+  const aviso = document.getElementById('aviso-docentes-pendientes');
+  if (aviso) {
+    aviso.style.display = pendientes ? 'block' : 'none';
+    aviso.textContent = pendientes ? ('⚠ Tienes ' + pendientes + ' cuenta(s) docente esperando aprobación.') : '';
+  }
+  const miId = state.docente ? state.docente.ID : null;
+  document.getElementById('tbody-docentes').innerHTML = state.docentes.map(function (d) {
+    const colorBadge = d.ESTADO === 'Activo' ? 'success' : (d.ESTADO === 'Pendiente' ? 'warning' : 'danger');
+    const esYo = d.ID === miId;
+    const acciones = [];
+    if (d.ESTADO === 'Pendiente') {
+      acciones.push('<button class="btn btn-primary btn-icon" title="Aprobar" onclick="aprobarDocente(\'' + d.ID + '\')"><i class="fa-solid fa-check"></i></button>');
+      acciones.push('<button class="btn btn-secondary btn-icon" title="Rechazar" onclick="rechazarDocente(\'' + d.ID + '\')"><i class="fa-solid fa-xmark"></i></button>');
+    } else if (d.ESTADO === 'Denegado') {
+      acciones.push('<button class="btn btn-primary btn-icon" title="Aprobar" onclick="aprobarDocente(\'' + d.ID + '\')"><i class="fa-solid fa-check"></i></button>');
+    } else if (d.ESTADO === 'Activo' && !esYo) {
+      acciones.push('<button class="btn btn-secondary btn-icon" title="Desactivar acceso" onclick="rechazarDocente(\'' + d.ID + '\')"><i class="fa-solid fa-ban"></i></button>');
+    }
+    if (!esYo) acciones.push('<button class="btn btn-danger btn-icon" title="Eliminar cuenta" onclick="confirmarEliminar(function(){ eliminarDocente(\'' + d.ID + '\'); })"><i class="fa-solid fa-trash"></i></button>');
+    return '<tr><td>' + d.NOMBRE + ' ' + (d.APELLIDO || '') + (esYo ? ' <span class="badge badge-info">Tú</span>' : '') + '</td><td>' + d.CORREO + '</td>' +
+      '<td><span class="badge badge-' + colorBadge + '">' + d.ESTADO + '</span></td>' +
+      '<td class="table-actions">' + acciones.join('') + '</td></tr>';
+  }).join('') || '<tr><td colspan="4" class="empty-state">No hay cuentas docentes registradas.</td></tr>';
+}
+async function aprobarDocente(id) { await api('updateTeacherStatus', { id: id, estado: 'Activo' }); await renderTeachersTable(); alertaFlotante('Cuenta docente aprobada.'); }
+async function rechazarDocente(id) { await api('updateTeacherStatus', { id: id, estado: 'Denegado' }); await renderTeachersTable(); alertaFlotante('Cuenta docente rechazada.'); }
+async function eliminarDocente(id) { await api('deleteTeacher', { id: id }); await renderTeachersTable(); alertaFlotante('Cuenta docente eliminada.'); }
 
 /* ============================================================
    SEMANAS — CRUD
@@ -2716,6 +2767,13 @@ const FirebaseBackend = {
         await setDoc(doc(db, 'config', 'general'), { CODIGO_DOCENTE: codigo }, { merge: true });
         return ok({ codigo: codigo });
       }
+      case 'getTeachers': {
+        const lista = await todos('docentes');
+        lista.forEach(function (d) { delete d.CONTRASENA_HASH; });
+        return ok({ data: lista });
+      }
+      case 'updateTeacherStatus': { await updateDoc(doc(db, 'docentes', p.id), { ESTADO: p.estado }); return ok({}); }
+      case 'deleteTeacher': await deleteDoc(doc(db, 'docentes', p.id)); return ok({});
 
       /* ---------- ESTUDIANTE ---------- */
       case 'loginStudent': {
@@ -2854,6 +2912,7 @@ const FirebaseBackend = {
         const examenes = await todos('examenes');
         const estudiantes = await todos('estudiantes');
         const preguntas = await todos('preguntas');
+        const docentes = await todos('docentes');
         const porSemana = {};
         resultados.forEach(function (r) {
           const ex = examenes.find(function (e) { return e.ID === r.EXAMEN_ID; });
@@ -2882,6 +2941,7 @@ const FirebaseBackend = {
           promedioPorSemana: promedioPorSemana, preguntasMasFalladas: preguntasMasFalladas, distribucion: distribucion, recientes: resultados.slice(-8).reverse(),
           totalEstudiantes: estudiantes.length, estudiantesActivos: estudiantes.filter(function (e) { return e.ESTADO === 'Activo'; }).length,
           estudiantesPendientes: estudiantes.filter(function (e) { return e.ESTADO === 'Pendiente'; }).length,
+          docentesPendientes: docentes.filter(function (d) { return d.ESTADO === 'Pendiente'; }).length,
           totalPreguntas: preguntas.length, totalExamenes: examenes.length, examenesRealizados: resultados.length, promedioGeneral: promedioGeneral
         });
       }
