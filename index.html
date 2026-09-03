@@ -2198,75 +2198,20 @@
           </div>
         </div>
 
-        <!-- MODALIDADES -->
-        <div class="section-heading">
-          <h2>MODALIDAD PRINCIPAL</h2>
-          <span>Selecciona una</span>
-        </div>
-
-        <div class="exam-grid">
-          <!-- MIXTO -->
-          <div class="exam-option selected" data-type="mixto" onclick="selectModernExam(this)">
-            <div class="selected-check">✓</div>
-            <div class="option-icon icon-mixed">✦</div>
-            <div class="option-title">Mixto</div>
-            <div class="option-description">Combina todos los tipos de preguntas.</div>
-          </div>
-          <!-- VERDADERO FALSO -->
-          <div class="exam-option" data-type="verdadero_falso" onclick="selectModernExam(this)">
-            <div class="selected-check">✓</div>
-            <div class="option-icon icon-true">✓ ✕</div>
-            <div class="option-title">Verdadero / Falso</div>
-            <div class="option-description">Determina si cada afirmación es verdadera o falsa.</div>
-          </div>
-          <!-- OPCION MULTIPLE -->
-          <div class="exam-option" data-type="multiple" onclick="selectModernExam(this)">
-            <div class="selected-check">✓</div>
-            <div class="option-icon icon-choice">◉</div>
-            <div class="option-title">Opción múltiple</div>
-            <div class="option-description">Selecciona la alternativa correcta entre varias opciones.</div>
-          </div>
-          <!-- ORDENAR -->
-          <div class="exam-option" data-type="ordenar" onclick="selectModernExam(this)">
-            <div class="selected-check">✓</div>
-            <div class="option-icon icon-order">↕</div>
-            <div class="option-title">Ordenar</div>
-            <div class="option-description">Organiza los elementos en el orden correcto.</div>
-          </div>
-          <!-- RELACIONAR (con flechas) -->
-          <div class="exam-option" data-type="relacionar" onclick="selectModernExam(this)">
-            <div class="selected-check">✓</div>
-            <div class="option-icon icon-match">╲─╱</div>
-            <div class="option-title">Relacionar</div>
-            <div class="option-description">Conecta conceptos con sus respuestas mediante líneas.</div>
-          </div>
-          <!-- UNIR TARJETAS (matching visual con líneas) -->
-          <div class="exam-option" data-type="matching" onclick="selectModernExam(this)">
-            <div class="selected-check">✓</div>
-            <div class="option-icon icon-cards">▣ → ▣</div>
-            <div class="option-title">Unir tarjetas</div>
-            <div class="option-description">Une cada tarjeta con el elemento que le corresponde.</div>
-          </div>
-        </div>
-
         <!-- INFORMACION -->
         <div class="info-box">
           <div class="info-icon">i</div>
           <div>
             <strong>El examen será dinámico</strong>
-            <p>La modalidad seleccionada determina el énfasis del examen, pero la evaluación siempre combinará
-              diferentes tipos de ejercicios para hacerla más completa e interactiva.</p>
+            <p>La evaluación combinará diferentes tipos de ejercicios (opción múltiple, verdadero/falso, ordenar,
+              relacionar y unir tarjetas) para hacerla más completa e interactiva.</p>
           </div>
         </div>
       </div>
 
       <!-- FOOTER -->
       <div class="modal-moderno-footer">
-        <div class="footer-status">
-          Modalidad seleccionada:
-          <strong id="selectedTypeLabel">Mixto</strong>
-        </div>
-        <div class="actions-modern">
+        <div class="actions-modern" style="margin-left:auto;">
           <button class="action-btn cancel" onclick="closeModal('modal-tipo-examen')">Cancelar</button>
           <button class="action-btn start" onclick="startModernExam()">Comenzar examen →</button>
         </div>
